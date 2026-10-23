@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="nav.css">
 <link rel="stylesheet" href="footer.css">
 <style>
   :root {
@@ -24,13 +25,11 @@
 
   .topbar { background: var(--navy-deep); border-bottom: 3px solid var(--red);
     display: flex; justify-content: space-between; align-items: center; gap: 1rem;
-    padding: calc(.55rem + env(safe-area-inset-top)) clamp(1.25rem, 4vw, 3.5rem) .55rem;
+    padding: calc(.4rem + env(safe-area-inset-top)) clamp(1.25rem, 4vw, 3.5rem) .4rem;
     font-weight: 600; font-size: .95rem; }
   .topbar .perks { color: rgba(247,241,227,.85); }
   .topbar .perks span { color: var(--red); margin: 0 .5em; }
-  .topbar nav { display: flex; gap: 1.4rem; }
   .topbar a { color: var(--cream); text-decoration: none; }
-  .topbar a:hover { text-decoration: underline; }
 
   header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 1.1rem clamp(1.25rem, 4vw, 3.5rem) 0; }
   .brand { font-family: var(--font-display); font-weight: 800; font-size: clamp(1.5rem, 2.8vw, 2.2rem); line-height: 1;
@@ -72,30 +71,41 @@
     padding: 1.4rem 1.6rem; background: var(--navy); border-left: 6px solid var(--red); }
   .cta p { font-family: var(--font-display); font-weight: 800; font-size: 1.6rem; text-transform: uppercase; line-height: 1.05; }
 
-  dialog { padding: 0; border: 0; background: transparent; max-width: min(92vw, 80rem); color: var(--cream); }
-  dialog::backdrop { background: rgba(4,12,24,.9); }
-  dialog figure { margin: 0; }
-  dialog img { display: block; max-width: 100%; max-height: 80vh; margin: 0 auto; border-bottom: 5px solid var(--red); }
-  dialog figcaption { margin-top: .7rem; text-align: center; font-weight: 600; }
-  .lb-btn { position: fixed; top: 50%; transform: translateY(-50%); width: 3rem; height: 3rem; border-radius: 50%; border: 2px solid var(--cream); cursor: pointer;
-    background: rgba(7,23,44,.7); color: var(--cream); font-size: 1.4rem; line-height: 1; }
+  /* photo viewer: a full-screen layer with the photo centered and the arrows mirrored on either side */
+  dialog { margin: 0; padding: 0; border: 0; inset: 0; width: 100vw; height: 100vh; height: 100dvh; max-width: none; max-height: none;
+    background: rgba(4,12,24,.95); color: var(--cream); }
+  dialog[open] { display: flex; align-items: center; justify-content: center; }
+  dialog::backdrop { background: rgba(4,12,24,.6); }
+  dialog figure { margin: 0; display: flex; flex-direction: column; align-items: center; max-width: calc(100vw - 10rem); }
+  dialog img { display: block; width: auto; height: auto; max-width: 100%; max-height: calc(100dvh - 9rem); object-fit: contain;
+    border-radius: 3px; border-bottom: 5px solid var(--red); box-shadow: 0 24px 70px rgba(0,0,0,.6); }
+  dialog figcaption { margin-top: .9rem; display: flex; gap: .8rem; align-items: baseline; justify-content: center; text-align: center; font-weight: 600; font-size: 1.05rem; }
+  dialog figcaption .lb-count { font-family: var(--font-display); font-weight: 800; letter-spacing: .08em; color: rgba(247,241,227,.6); }
+  .lb-btn { position: absolute; top: 50%; transform: translateY(-50%); width: 3.2rem; height: 3.2rem; border-radius: 50%; border: 2px solid var(--cream); cursor: pointer;
+    display: grid; place-items: center; padding: 0; background: rgba(7,23,44,.75); color: var(--cream); font-size: 1.6rem; line-height: 1;
+    transition: background .2s, transform .15s; }
   .lb-btn:hover { background: var(--red); }
-  .lb-prev { left: 1rem; } .lb-next { right: 1rem; }
-  .lb-close { top: 1rem; right: 1rem; transform: none; }
+  .lb-prev { left: 2rem; } .lb-next { right: 2rem; }
+  .lb-close { top: 1.5rem; right: 2rem; transform: none; font-size: 1.2rem; }
   [hidden] { display: none !important; }
 
   @media (max-width: 720px) {
     .topbar .perks { display: none; }
     .topbar { justify-content: center; }
     header a.btn { font-size: 1rem; padding: .5rem .9rem; }
-    .lb-prev, .lb-next { top: auto; bottom: 1rem; transform: none; }
+    /* phones: photo edge to edge (with a gutter), arrows as a centered pair under it */
+    dialog figure { max-width: calc(100vw - 2rem); }
+    dialog img { max-height: calc(100dvh - 12rem); }
+    .lb-prev, .lb-next { top: auto; bottom: calc(1.5rem + env(safe-area-inset-bottom)); transform: none; }
+    .lb-prev { left: calc(50% - 4rem); } .lb-next { right: calc(50% - 4rem); }
+    .lb-close { top: calc(1rem + env(safe-area-inset-top)); right: 1rem; }
   }
 </style>
 </head>
 <body>
   <div class="topbar">
     <div class="perks">Free Estimates<span>&#9733;</span>Licensed &amp; Insured<span>&#9733;</span>Family Owned</div>
-    <nav><a href="gallery.html" aria-current="page">Gallery</a><a href="tel:+15555550123">Call (555) 555-0123</a></nav>
+    <nav aria-label="Main"><a href="index.html">Home</a><a href="gallery.html" aria-current="page">Gallery</a><a href="lead.html">Contact us</a><a class="tb-call" href="tel:+15555550123"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25c1.12.37 2.33.57 3.6.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z"/></svg><span class="tb-num">(555) 555-0123</span><span class="tb-short">Call</span></a></nav>
   </div>
 
   <header>
@@ -125,7 +135,7 @@
   </main>
 
   <dialog id="lightbox" aria-label="Photo">
-    <figure><img id="lb-img" alt=""><figcaption id="lb-cap"></figcaption></figure>
+    <figure><img id="lb-img" alt=""><figcaption><span class="lb-count" id="lb-count"></span><span id="lb-cap"></span></figcaption></figure>
     <button class="lb-btn lb-prev" id="lb-prev" type="button" aria-label="Previous photo">&#8249;</button>
     <button class="lb-btn lb-next" id="lb-next" type="button" aria-label="Next photo">&#8250;</button>
     <button class="lb-btn lb-close" id="lb-close" type="button" aria-label="Close">&#10005;</button>
@@ -165,6 +175,7 @@
     at = (i + shown.length) % shown.length;
     const p = shown[at];
     lbImg.src = p.src; lbImg.alt = p.caption || ""; lbCap.textContent = p.caption || "";
+    $("lb-count").textContent = shown.length > 1 ? (at + 1) + " / " + shown.length : "";
     $("lb-prev").hidden = $("lb-next").hidden = shown.length < 2;
   }
   function open(i) { show(i); lb.showModal(); }
@@ -173,7 +184,7 @@
   $("lb-prev").addEventListener("click", () => show(at - 1));
   $("lb-next").addEventListener("click", () => show(at + 1));
   $("lb-close").addEventListener("click", () => lb.close());
-  lb.addEventListener("click", e => { if (e.target === lb) lb.close(); });   // click on the backdrop
+  lb.addEventListener("click", e => { if (e.target === lb || e.target.tagName === "FIGURE") lb.close(); });   // click on the dark area around the photo
   lb.addEventListener("keydown", e => {
     if (e.key === "ArrowLeft") show(at - 1);
     if (e.key === "ArrowRight") show(at + 1);

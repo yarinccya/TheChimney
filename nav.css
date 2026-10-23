@@ -1,0 +1,23 @@
+/* Top bar links, shared by every page. The page marks its own link with aria-current="page". */
+.topbar nav { display: flex; align-items: center; gap: .25rem; }
+.topbar nav a { position: relative; font-family: var(--font-display); font-weight: 800; font-size: 1.15rem; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--cream); text-decoration: none; padding: .3rem .75rem; border-radius: 3px; transition: background .2s, color .2s; }
+.topbar nav a:hover { background: rgba(247,241,227,.14); text-decoration: none; }
+.topbar nav a[aria-current="page"]::after { content: ""; position: absolute; left: .75rem; right: .75rem; bottom: -.05rem; height: 3px; background: var(--red); }
+
+.topbar nav a.tb-call { display: inline-flex; align-items: center; gap: .45rem; margin-left: .7rem; padding: .32rem 1rem .25rem;
+  background: var(--red); border-bottom: 3px solid var(--red-dark); box-shadow: 0 3px 10px rgba(200,16,46,.35); }
+.topbar nav a.tb-call:hover { background: #e0173a; }
+.tb-call svg { width: 1em; height: 1em; flex: none; animation: tb-ring 4s ease-in-out infinite; }
+.tb-call .tb-short { display: none; }
+/* a short wiggle every few seconds, so the phone catches the eye */
+@keyframes tb-ring { 0%, 86%, 100% { transform: rotate(0); } 88% { transform: rotate(-16deg); } 91% { transform: rotate(14deg); } 94% { transform: rotate(-10deg); } 97% { transform: rotate(6deg); } }
+@media (prefers-reduced-motion: reduce) { .tb-call svg { animation: none; } }
+
+@media (max-width: 720px) {
+  .topbar nav a { font-size: 1rem; padding: .3rem .5rem; letter-spacing: .04em; }
+  .topbar nav a[aria-current="page"]::after { left: .5rem; right: .5rem; }
+  .topbar nav a.tb-call { margin-left: .3rem; padding: .3rem .7rem .22rem; }
+  .tb-call .tb-num { display: none; }
+  .tb-call .tb-short { display: inline; }
+}
