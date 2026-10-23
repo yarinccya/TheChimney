@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Free estimate | THECHEMINEYS</title>
+<meta name="description" content="Leave your details and THECHEMINEYS will call you back with a free chimney estimate.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="footer.css">
+<style>
+  :root {
+    --navy: #0b2545;
+    --navy-deep: #07172c;
+    --red: #c8102e;
+    --red-dark: #8f0b21;
+    --cream: #f7f1e3;
+    --font-display: "Barlow Condensed", "Arial Narrow", Impact, sans-serif;
+    --font-body: "Barlow", "Helvetica Neue", Arial, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { min-height: 100vh; background: var(--navy-deep); color: var(--cream); font-family: var(--font-body);
+    background-image: linear-gradient(rgba(7,23,44,.82), rgba(7,23,44,.94)), url("frames/start.webp"); background-size: cover; background-position: center; background-attachment: fixed; }
+
+  .topbar { background: var(--navy-deep); border-bottom: 3px solid var(--red);
+    display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+    padding: calc(.55rem + env(safe-area-inset-top)) clamp(1.25rem, 4vw, 3.5rem) .55rem;
+    font-weight: 600; font-size: .95rem; }
+  .topbar .perks { color: rgba(247,241,227,.85); }
+  .topbar .perks span { color: var(--red); margin: 0 .5em; }
+  .topbar nav { display: flex; gap: 1.4rem; }
+  .topbar a { color: var(--cream); text-decoration: none; }
+  .topbar a:hover { text-decoration: underline; }
+
+  header { padding: 1.1rem clamp(1.25rem, 4vw, 3.5rem) 0; }
+  .brand { font-family: var(--font-display); font-weight: 800; font-size: clamp(1.5rem, 2.8vw, 2.2rem); line-height: 1;
+    text-transform: uppercase; letter-spacing: .02em; color: var(--cream); text-decoration: none; }
+  .brand i { font-style: normal; color: var(--red); margin-right: .3em; -webkit-text-stroke: 1px var(--cream); }
+
+  main { max-width: 38rem; margin: 0 auto; padding: 2.5rem 1.25rem 4rem; }
+  .stripes { width: 6.5rem; height: 14px; margin-bottom: 1.1rem;
+    background: linear-gradient(to bottom, var(--red) 0 33.3%, var(--cream) 33.3% 66.6%, #2a5db0 66.6% 100%); }
+  h1 { font-family: var(--font-display); font-size: clamp(2.4rem, 6vw, 4rem); line-height: .95; font-weight: 800; text-transform: uppercase; }
+  p.lead { margin-top: .9rem; font-size: 1.1rem; line-height: 1.5; color: rgba(247,241,227,.9); }
+
+  form { margin-top: 2rem; display: grid; gap: 1.1rem; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem; }
+  label { display: grid; gap: .35rem; font-weight: 600; font-size: .95rem; }
+  label small { font-weight: 400; color: rgba(247,241,227,.65); }
+  input, select, textarea { font: inherit; font-size: 1.05rem; color: var(--navy); background: var(--cream);
+    border: 0; border-bottom: 4px solid var(--navy); border-radius: 3px; padding: .75rem .85rem; width: 100%; }
+  textarea { min-height: 7rem; resize: vertical; }
+  input:focus, select:focus, textarea:focus { outline: 3px solid var(--red); outline-offset: 1px; }
+
+  button, a.btn { font-family: var(--font-display); font-weight: 800; font-size: 1.3rem; text-transform: uppercase; letter-spacing: .05em; cursor: pointer; text-decoration: none;
+    padding: .8rem 1.7rem; border-radius: 3px; border: 0; border-bottom: 5px solid var(--red-dark); background: var(--red); color: var(--cream);
+    transition: background .2s, transform .12s, border-bottom-width .12s; min-height: 3.2rem; display: inline-flex; align-items: center; justify-content: center; }
+  button:hover:not(:disabled), a.btn:hover { background: #e0173a; }
+  button:active:not(:disabled), a.btn:active { transform: translateY(3px); border-bottom-width: 2px; }
+  button:disabled { cursor: progress; opacity: .6; }
+  a.btn.ghost { background: transparent; border: 2px solid var(--cream); border-bottom-width: 5px; }
+  a.btn.ghost:hover { background: rgba(247,241,227,.16); }
+  button:focus-visible, a:focus-visible { outline: 3px solid var(--cream); outline-offset: 3px; }
+  .note { font-size: .9rem; color: rgba(247,241,227,.7); }
+  .error { color: #ffb3bf; font-weight: 600; }
+  .done { margin-top: 2rem; padding: 1.5rem; background: rgba(247,241,227,.08); border-left: 5px solid var(--red); }
+  .done h2 { font-family: var(--font-display); font-size: 2rem; text-transform: uppercase; }
+  .done p { margin: .6rem 0 1.2rem; line-height: 1.5; }
+  [hidden] { display: none !important; }
+
+  @media (max-width: 720px) {
+    .topbar .perks { display: none; }
+    .topbar { justify-content: center; }
+    .row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="perks">Free Estimates<span>&#9733;</span>Licensed &amp; Insured<span>&#9733;</span>Family Owned</div>
+    <nav><a href="gallery.html">Gallery</a><a href="tel:+15555550123">Call (555) 555-0123</a></nav>
+  </div>
+
+  <header><a class="brand" href="index.html" aria-label="THECHEMINEYS home"><i>&#9733;</i>THECHEMINEYS</a></header>
+
+  <main>
+    <div class="stripes" aria-hidden="true"></div>
+    <h1 id="title">Get a free estimate</h1>
+    <p class="lead">Leave your details and we'll call you back within one business day.</p>
+
+    <form id="lead" novalidate>
+      <label>Service
+        <select name="service" id="service">
+          <option value="install">New chimney installation</option>
+          <option value="clean">Chimney cleaning</option>
+          <option value="replace">Chimney replacement</option>
+          <option value="other">Something else</option>
+        </select>
+      </label>
+      <div class="row">
+        <label>Full name <input name="name" autocomplete="name" required></label>
+        <label>Phone <input name="phone" type="tel" autocomplete="tel" required></label>
+      </div>
+      <div class="row">
+        <label>Email <small>(optional)</small> <input name="email" type="email" autocomplete="email"></label>
+        <label>City / ZIP <input name="location" autocomplete="postal-code"></label>
+      </div>
+      <label>Anything we should know? <small>(optional)</small> <textarea name="message"></textarea></label>
+      <p class="error" id="error" role="alert" hidden></p>
+      <button type="submit" id="send">Send my details</button>
+      <p class="note">We only use your details to contact you about this estimate.</p>
+    </form>
+
+    <div class="done" id="done" hidden tabindex="-1">
+      <h2>Thanks, we got it.</h2>
+      <p>We'll call you back within one business day. Need us sooner? Call (555) 555-0123.</p>
+      <a class="btn ghost" href="index.html">Back to the site</a>
+    </div>
+  </main>
+
+  <footer id="site-footer"></footer>
+  <script src="footer.js"></script>
+<script>
+(() => {
+  // Where leads are sent. Set this to a form backend URL (it receives the fields as JSON via POST).
+  // Left empty, the form opens the visitor's email app with the details filled in instead.
+  const ENDPOINT = "";
+  const LEAD_EMAIL = "info@thechemineys.com";
+  const TITLES = { install: "Get a free install quote", clean: "Book a chimney cleaning", replace: "Get a free replacement quote" };
+
+  const $ = id => document.getElementById(id);
+  const form = $("lead"), service = $("service"), errorEl = $("error"), sendBtn = $("send");
+
+  const wanted = new URLSearchParams(location.search).get("service");
+  if (TITLES[wanted]) { service.value = wanted; $("title").textContent = TITLES[wanted]; document.title = TITLES[wanted] + " | THECHEMINEYS"; }
+
+  function fail(msg, field) { errorEl.textContent = msg; errorEl.hidden = false; if (field) field.focus(); }
+
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
+    errorEl.hidden = true;
+    const data = Object.fromEntries(new FormData(form));
+    if (!data.name.trim()) return fail("Please enter your name.", form.name);
+    if (data.phone.replace(/\D/g, "").length < 7) return fail("Please enter a phone number we can call.", form.phone);
+    if (data.email && !form.email.checkValidity()) return fail("That email address doesn't look right.", form.email);
+    data.serviceLabel = service.options[service.selectedIndex].text;
+
+    if (!ENDPOINT) {
+      const body = ["Service: " + data.serviceLabel, "Name: " + data.name, "Phone: " + data.phone,
+        "Email: " + (data.email || "-"), "City / ZIP: " + (data.location || "-"), "", data.message || ""].join("\n");
+      location.href = "mailto:" + LEAD_EMAIL + "?subject=" + encodeURIComponent("New lead: " + data.serviceLabel) + "&body=" + encodeURIComponent(body);
+      return;
+    }
+    sendBtn.disabled = true; sendBtn.textContent = "Sending…";
+    try {
+      const res = await fetch(ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" }, body: JSON.stringify(data) });
+      if (!res.ok) throw new Error(res.status);
+      form.hidden = true; $("done").hidden = false; $("done").focus();
+    } catch (err) {
+      fail("Something went wrong sending your details. Please try again or call (555) 555-0123.");
+      sendBtn.disabled = false; sendBtn.textContent = "Send my details";
+    }
+  });
+})();
+</script>
+</body>
+</html>

@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="footer.css">
 <style>
   :root {
     --navy: #0b2545;
@@ -19,12 +20,13 @@
     --font-body: "Barlow", "Helvetica Neue", Arial, sans-serif;
   }
   * { box-sizing: border-box; margin: 0; }
-  html, body { height: 100%; overflow: hidden; overscroll-behavior: none; background: var(--navy-deep); color: var(--cream); font-family: var(--font-body); }
-  body { position: fixed; inset: 0; width: 100%; }
+  html, body { overscroll-behavior: none; background: var(--navy-deep); color: var(--cream); font-family: var(--font-body); }
 
-  canvas#stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  /* the footage fills the first screen; the footer sits below it */
+  .hero { position: relative; height: 100vh; height: 100svh; min-height: 34rem; overflow: hidden; }
+  canvas#stage { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 
-  .scrim { position: fixed; inset: 0; pointer-events: none;
+  .scrim { position: absolute; inset: 0; pointer-events: none;
     background:
       radial-gradient(ellipse 70% 58% at 50% 54%, rgba(7,23,44,.62) 0%, rgba(7,23,44,.3) 60%, rgba(7,23,44,0) 100%),
       linear-gradient(to top, rgba(7,23,44,.7) 0%, rgba(7,23,44,.3) 30%, rgba(7,23,44,0) 55%),
@@ -37,10 +39,11 @@
     font-weight: 600; font-size: .95rem; }
   .topbar .perks { color: rgba(247,241,227,.85); }
   .topbar .perks span { color: var(--red); margin: 0 .5em; }
+  .topbar nav { display: flex; gap: 1.4rem; }
   .topbar a { color: var(--cream); text-decoration: none; font-weight: 600; }
   .topbar a:hover { text-decoration: underline; }
 
-  header { position: fixed; top: calc(2.6rem + env(safe-area-inset-top)); left: 0; right: 0; display: flex; justify-content: space-between; align-items: center;
+  header { position: absolute; top: calc(2.6rem + env(safe-area-inset-top)); left: 0; right: 0; display: flex; justify-content: space-between; align-items: center;
     padding: 1.1rem clamp(1.25rem, 4vw, 3.5rem) 0; z-index: 3; }
   .brand { font-family: var(--font-display); font-weight: 800; font-size: clamp(1.5rem, 2.8vw, 2.2rem); line-height: 1;
     text-transform: uppercase; letter-spacing: .02em; color: var(--cream); text-decoration: none; text-shadow: 0 2px 10px rgba(0,0,0,.5); }
@@ -71,7 +74,7 @@
   .steps li.on button::before { display: none; }
   .steps li.on .ico { width: 1em; opacity: 1; transform: none; }
 
-  .copy { position: fixed; left: clamp(1.25rem, 4vw, 3.5rem); right: clamp(1.25rem, 4vw, 3.5rem);
+  .copy { position: absolute; left: clamp(1.25rem, 4vw, 3.5rem); right: clamp(1.25rem, 4vw, 3.5rem);
     top: 50%; transform: translateY(-50%); padding-top: 3rem; z-index: 3; max-width: 64rem; margin: 0 auto; text-align: center; }
   .stripes { width: 6.5rem; height: 14px; margin: 0 auto 1.1rem;
     background: linear-gradient(to bottom, var(--red) 0 33.3%, var(--cream) 33.3% 66.6%, #2a5db0 66.6% 100%); }
@@ -105,13 +108,14 @@
 </style>
 </head>
 <body>
-  <canvas id="stage" role="img" aria-label="Chimney footage"></canvas>
-  <div class="scrim"></div>
-
   <div class="topbar">
     <div class="perks">Free Estimates<span>&#9733;</span>Licensed &amp; Insured<span>&#9733;</span>Family Owned</div>
-    <a href="tel:+15555550123">Call (555) 555-0123</a>
+    <nav><a href="gallery.html">Gallery</a><a href="tel:+15555550123">Call (555) 555-0123</a></nav>
   </div>
+
+  <section class="hero">
+  <canvas id="stage" role="img" aria-label="Chimney footage"></canvas>
+  <div class="scrim"></div>
 
   <header>
     <a class="brand" href="#" aria-label="THECHEMINEYS home"><i>&#9733;</i>THECHEMINEYS</a>
@@ -129,24 +133,27 @@
       <p class="lead" id="lead"></p>
     </div>
     <div class="actions" id="actions">
+      <a class="btn" id="quote" href="lead.html" hidden>Get a free estimate</a>
       <button id="next" type="button" disabled>Loading…</button>
-      <a class="btn" id="quote" href="mailto:info@thechemineys.com?subject=Free%20chimney%20estimate" hidden>Get a free estimate</a>
       <a class="btn ghost" id="call" href="tel:+15555550123" hidden>Call now</a>
-      <button id="replay" class="ghost" type="button" hidden>Watch again</button>
     </div>
   </main>
+  </section>
+
+  <footer id="site-footer"></footer>
+  <script src="footer.js"></script>
 
 <script>
 (() => {
   const FPS = 30, DISSOLVE = 500, AHEAD = 18, WARM = 12, IW = 1920, IH = 1280, TEXT_DELAY = 2000;
   const SEQS = [
-    { dir: "frames/s1/", n: 149, label: "See new installations",
+    { dir: "frames/s1/", n: 149, label: "See new installations", slug: "install", cta: "Get a free install quote",
       title: "No chimney yet?\nWe build one.",
       lead: "New chimney installations for homes without a flue. From the hearth to the cap, built and sealed for safe burning." },
-    { dir: "frames/s2/", n: 150, label: "See chimney cleaning",
+    { dir: "frames/s2/", n: 150, label: "See chimney cleaning", slug: "clean", cta: "Book a chimney cleaning",
       title: "Clean flue,\nsafe fire.",
       lead: "A full sweep and inspection that clears soot and creosote before they turn into a fire risk." },
-    { dir: "frames/s3/", n: 150, label: "See chimney replacement",
+    { dir: "frames/s3/", n: 150, label: "See chimney replacement", slug: "replace", cta: "Get a free replacement quote",
       title: "Old chimney out.\nNew one up.",
       lead: "Crumbling brick and failing flashing replaced with a rebuilt stack that keeps your roof dry and your home safe." }
   ];
@@ -160,7 +167,7 @@
   const $ = id => document.getElementById(id);
   const canvas = $("stage"), ctx = canvas.getContext("2d");
   const titleEl = $("title"), leadEl = $("lead"), textEl = $("text"), actions = $("actions");
-  const nextBtn = $("next"), quoteBtn = $("quote"), callBtn = $("call"), replayBtn = $("replay");
+  const nextBtn = $("next"), quoteBtn = $("quote"), callBtn = $("call");
   const stepLis = [...document.querySelectorAll(".steps li")];
   const brand = document.querySelector(".brand");
 
@@ -169,6 +176,7 @@
   let step = 0;              // clip the main button plays next
   let playing = -1;          // clip currently playing
   let run = 0;               // bumps on every action so older animations stop
+  let wanted = -1;           // clip asked for by the URL (#install / #clean / #replace) before it finished loading
   const loaded = SEQS.map(() => false);
   const blobs = SEQS.map(() => []);    // compressed frames
   const frames = SEQS.map(() => []);   // <img> fallback
@@ -177,8 +185,8 @@
   /* ---------- drawing (all clips + start picture share one 3:2 frame, so framing never changes) ---------- */
   function size() {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    canvas.width = Math.round(innerWidth * dpr);
-    canvas.height = Math.round(innerHeight * dpr);
+    canvas.width = Math.round(canvas.clientWidth * dpr);
+    canvas.height = Math.round(canvas.clientHeight * dpr);
     paint(held, 1);
   }
   function paint(src, alpha) {
@@ -289,6 +297,7 @@
       })));
     }
     loaded[k] = true; refreshUI(); if (k === step) warm(k);
+    if (k === wanted) { wanted = -1; go(k, false); }
   }
   (async () => { for (let k = 0; k < SEQS.length; k++) await loadSeq(k); })();
 
@@ -310,11 +319,14 @@
       nextBtn.textContent = ready ? (step === 0 ? "See how we work" : SEQS[step].label) : "Loading\u2026";
     }
   }
-  function setButtons(atEnd) {
-    nextBtn.hidden = atEnd;
-    quoteBtn.hidden = callBtn.hidden = replayBtn.hidden = !atEnd;
+  function setButtons(k) { // k = clip on screen, -1 = start picture
+    const atEnd = k === SEQS.length - 1;
+    quoteBtn.hidden = k < 0;
+    if (k >= 0) { quoteBtn.href = "lead.html?service=" + SEQS[k].slug; quoteBtn.textContent = SEQS[k].cta; }
+    nextBtn.hidden = k >= 0;   // on a clip the top steps are the navigation
+    callBtn.hidden = !atEnd;
   }
-  function showStart() { step = 0; setText(START.title, START.lead); markSteps(-1); setButtons(false); refreshUI(); warm(0); }
+  function showStart() { step = 0; setText(START.title, START.lead); markSteps(-1); setButtons(-1); refreshUI(); warm(0); }
   function reveal(focusEl) {
     textEl.classList.remove("out"); actions.classList.remove("hide");
     if (focusEl) focusEl.focus({ preventScroll: true });
@@ -326,15 +338,15 @@
     const id = ++run, seq = SEQS[k], from = snapshot();
     actions.classList.add("hide"); textEl.classList.add("out");
     markSteps(k);
-    // The clip's text comes in over the footage TEXT_DELAY ms after the click; the buttons wait for the clip to end.
-    setTimeout(() => { if (id !== run) return; setText(seq.title, seq.lead); textEl.classList.remove("out"); }, TEXT_DELAY);
-    if (!await play(k, id, from)) return;
-    step = k + 1;
-    setText(seq.title, seq.lead);
-    const atEnd = step >= SEQS.length;
-    setButtons(atEnd); refreshUI();
-    if (!atEnd) warm(step);
-    reveal(viaButton ? (atEnd ? quoteBtn : nextBtn) : null);
+    // TEXT_DELAY ms after the click the clip's text and buttons come in over the footage while it keeps playing.
+    setTimeout(() => {
+      if (id !== run) return;
+      step = k + 1;
+      setText(seq.title, seq.lead);
+      setButtons(k); refreshUI();
+      reveal(viaButton ? quoteBtn : null);
+    }, TEXT_DELAY);
+    if (await play(k, id, from) && step < SEQS.length) warm(step);
   }
   async function goStart() {
     const id = ++run;
@@ -344,7 +356,6 @@
   }
 
   nextBtn.addEventListener("click", () => go(step, true));
-  replayBtn.addEventListener("click", goStart);
   brand.addEventListener("click", e => { e.preventDefault(); if (held !== startImg || run) goStart(); });
   stepLis.forEach(li => {
     const b = li.firstElementChild, k = +li.dataset.k;
@@ -353,11 +364,20 @@
   });
   ["pointerenter", "pointerdown", "focus"].forEach(ev => nextBtn.addEventListener(ev, () => warm(step)));
   addEventListener("resize", size);
+  // The footer links to index.html#install etc.: play that clip (once it has loaded) from the top of the page.
+  function fromHash() {
+    const k = SEQS.findIndex(s => "#" + s.slug === location.hash);
+    if (k < 0) return;
+    scrollTo(0, 0);
+    if (loaded[k]) go(k, false); else wanted = k;
+  }
+  addEventListener("hashchange", fromHash);
 
   startImg.onload = () => { size(); };
   startImg.src = "frames/start.webp";
   size();
   showStart();
+  fromHash();
 })();
 </script>
 </body>

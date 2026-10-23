@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Our work | THECHEMINEYS</title>
+<meta name="description" content="Photos of chimney installations, cleanings and replacements done by THECHEMINEYS.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="footer.css">
+<style>
+  :root {
+    --navy: #0b2545;
+    --navy-deep: #07172c;
+    --red: #c8102e;
+    --red-dark: #8f0b21;
+    --cream: #f7f1e3;
+    --font-display: "Barlow Condensed", "Arial Narrow", Impact, sans-serif;
+    --font-body: "Barlow", "Helvetica Neue", Arial, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--navy-deep); color: var(--cream); font-family: var(--font-body); }
+
+  .topbar { background: var(--navy-deep); border-bottom: 3px solid var(--red);
+    display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+    padding: calc(.55rem + env(safe-area-inset-top)) clamp(1.25rem, 4vw, 3.5rem) .55rem;
+    font-weight: 600; font-size: .95rem; }
+  .topbar .perks { color: rgba(247,241,227,.85); }
+  .topbar .perks span { color: var(--red); margin: 0 .5em; }
+  .topbar nav { display: flex; gap: 1.4rem; }
+  .topbar a { color: var(--cream); text-decoration: none; }
+  .topbar a:hover { text-decoration: underline; }
+
+  header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 1.1rem clamp(1.25rem, 4vw, 3.5rem) 0; }
+  .brand { font-family: var(--font-display); font-weight: 800; font-size: clamp(1.5rem, 2.8vw, 2.2rem); line-height: 1;
+    text-transform: uppercase; letter-spacing: .02em; color: var(--cream); text-decoration: none; }
+  .brand i { font-style: normal; color: var(--red); margin-right: .3em; -webkit-text-stroke: 1px var(--cream); }
+
+  a.btn { font-family: var(--font-display); font-weight: 800; font-size: 1.2rem; text-transform: uppercase; letter-spacing: .05em; text-decoration: none;
+    padding: .65rem 1.4rem; border-radius: 3px; border-bottom: 5px solid var(--red-dark); background: var(--red); color: var(--cream);
+    transition: background .2s, transform .12s, border-bottom-width .12s; display: inline-flex; align-items: center; }
+  a.btn:hover { background: #e0173a; }
+  a.btn:active { transform: translateY(3px); border-bottom-width: 2px; }
+
+  main { max-width: 76rem; margin: 0 auto; padding: 2.5rem clamp(1.25rem, 4vw, 3.5rem) 4rem; }
+  .stripes { width: 6.5rem; height: 14px; margin-bottom: 1.1rem;
+    background: linear-gradient(to bottom, var(--red) 0 33.3%, var(--cream) 33.3% 66.6%, #2a5db0 66.6% 100%); }
+  h1 { font-family: var(--font-display); font-size: clamp(2.6rem, 6vw, 4.5rem); line-height: .95; font-weight: 800; text-transform: uppercase; }
+  p.lead { margin-top: .8rem; font-size: 1.1rem; line-height: 1.5; color: rgba(247,241,227,.88); max-width: 38rem; }
+
+  .filters { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1.8rem 0 1.4rem; padding: 0; list-style: none; }
+  .filters button { font-family: var(--font-display); font-weight: 800; font-size: 1.05rem; letter-spacing: .06em; text-transform: uppercase; cursor: pointer;
+    padding: .45rem 1rem .4rem; border-radius: 3px; border: 0; border-bottom: 4px solid var(--navy); background: var(--cream); color: var(--navy);
+    transition: background .2s, color .2s, transform .15s; }
+  .filters button:hover { transform: translateY(-2px); }
+  .filters button[aria-pressed="true"] { background: var(--red); color: var(--cream); border-bottom-color: var(--red-dark); }
+  .filters button:focus-visible, .tile:focus-visible, dialog button:focus-visible, a:focus-visible { outline: 3px solid var(--cream); outline-offset: 3px; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); gap: 1rem; }
+  .tile { position: relative; display: block; width: 100%; padding: 0; border: 0; cursor: zoom-in; aspect-ratio: 3 / 2; overflow: hidden; border-radius: 3px;
+    background: var(--navy); border-bottom: 5px solid var(--red); box-shadow: 0 8px 22px rgba(0,0,0,.35); }
+  .tile img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .45s cubic-bezier(.2,.8,.2,1); }
+  .tile:hover img { transform: scale(1.06); }
+  .tile .tag { position: absolute; top: .6rem; left: .6rem; font-family: var(--font-display); font-weight: 800; font-size: .85rem; letter-spacing: .08em; text-transform: uppercase;
+    background: var(--navy-deep); color: var(--cream); padding: .2rem .55rem; border-radius: 2px; }
+  .tile .cap { position: absolute; left: 0; right: 0; bottom: 0; padding: 2.2rem .9rem .7rem; text-align: left; font-weight: 600; font-size: .98rem; color: #fff;
+    background: linear-gradient(to top, rgba(7,23,44,.92), rgba(7,23,44,0)); }
+  .empty { padding: 3rem 1rem; text-align: center; color: rgba(247,241,227,.75); border: 2px dashed rgba(247,241,227,.25); border-radius: 4px; }
+
+  .cta { margin-top: 3rem; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem;
+    padding: 1.4rem 1.6rem; background: var(--navy); border-left: 6px solid var(--red); }
+  .cta p { font-family: var(--font-display); font-weight: 800; font-size: 1.6rem; text-transform: uppercase; line-height: 1.05; }
+
+  dialog { padding: 0; border: 0; background: transparent; max-width: min(92vw, 80rem); color: var(--cream); }
+  dialog::backdrop { background: rgba(4,12,24,.9); }
+  dialog figure { margin: 0; }
+  dialog img { display: block; max-width: 100%; max-height: 80vh; margin: 0 auto; border-bottom: 5px solid var(--red); }
+  dialog figcaption { margin-top: .7rem; text-align: center; font-weight: 600; }
+  .lb-btn { position: fixed; top: 50%; transform: translateY(-50%); width: 3rem; height: 3rem; border-radius: 50%; border: 2px solid var(--cream); cursor: pointer;
+    background: rgba(7,23,44,.7); color: var(--cream); font-size: 1.4rem; line-height: 1; }
+  .lb-btn:hover { background: var(--red); }
+  .lb-prev { left: 1rem; } .lb-next { right: 1rem; }
+  .lb-close { top: 1rem; right: 1rem; transform: none; }
+  [hidden] { display: none !important; }
+
+  @media (max-width: 720px) {
+    .topbar .perks { display: none; }
+    .topbar { justify-content: center; }
+    header a.btn { font-size: 1rem; padding: .5rem .9rem; }
+    .lb-prev, .lb-next { top: auto; bottom: 1rem; transform: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="perks">Free Estimates<span>&#9733;</span>Licensed &amp; Insured<span>&#9733;</span>Family Owned</div>
+    <nav><a href="gallery.html" aria-current="page">Gallery</a><a href="tel:+15555550123">Call (555) 555-0123</a></nav>
+  </div>
+
+  <header>
+    <a class="brand" href="index.html" aria-label="THECHEMINEYS home"><i>&#9733;</i>THECHEMINEYS</a>
+    <a class="btn" href="lead.html">Free estimate</a>
+  </header>
+
+  <main>
+    <div class="stripes" aria-hidden="true"></div>
+    <h1>Our work</h1>
+    <p class="lead">Chimneys we've built, cleaned and rebuilt for homeowners. Tap a photo to see it full size.</p>
+
+    <ul class="filters" aria-label="Filter by service">
+      <li><button type="button" data-f="all" aria-pressed="true">All</button></li>
+      <li><button type="button" data-f="install" aria-pressed="false">Installations</button></li>
+      <li><button type="button" data-f="clean" aria-pressed="false">Cleaning</button></li>
+      <li><button type="button" data-f="replace" aria-pressed="false">Replacement</button></li>
+    </ul>
+
+    <div class="grid" id="grid"></div>
+    <p class="empty" id="empty" hidden>No photos here yet. Check back soon.</p>
+
+    <div class="cta">
+      <p>Want results like these?</p>
+      <a class="btn" href="lead.html">Get a free estimate</a>
+    </div>
+  </main>
+
+  <dialog id="lightbox" aria-label="Photo">
+    <figure><img id="lb-img" alt=""><figcaption id="lb-cap"></figcaption></figure>
+    <button class="lb-btn lb-prev" id="lb-prev" type="button" aria-label="Previous photo">&#8249;</button>
+    <button class="lb-btn lb-next" id="lb-next" type="button" aria-label="Next photo">&#8250;</button>
+    <button class="lb-btn lb-close" id="lb-close" type="button" aria-label="Close">&#10005;</button>
+  </dialog>
+
+  <footer id="site-footer"></footer>
+  <script src="footer.js"></script>
+  <script src="gallery/photos.js"></script>
+<script>
+(() => {
+  const NAMES = { install: "Installation", clean: "Cleaning", replace: "Replacement" };
+  const photos = window.GALLERY_PHOTOS || [];
+  const $ = id => document.getElementById(id);
+  const grid = $("grid"), empty = $("empty"), lb = $("lightbox"), lbImg = $("lb-img"), lbCap = $("lb-cap");
+  const filterBtns = [...document.querySelectorAll(".filters button")];
+  let shown = [], at = 0;
+
+  function render(f) {
+    shown = photos.filter(p => f === "all" || p.service === f);
+    grid.replaceChildren(...shown.map((p, i) => {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "tile";
+      b.setAttribute("aria-label", "Open photo: " + (p.caption || NAMES[p.service] || ""));
+      const img = document.createElement("img");
+      img.src = p.src; img.alt = p.caption || ""; img.loading = "lazy"; img.decoding = "async";
+      b.append(img);
+      if (NAMES[p.service]) { const t = document.createElement("span"); t.className = "tag"; t.textContent = NAMES[p.service]; b.append(t); }
+      if (p.caption) { const c = document.createElement("span"); c.className = "cap"; c.textContent = p.caption; b.append(c); }
+      b.addEventListener("click", () => open(i));
+      return b;
+    }));
+    empty.hidden = shown.length > 0;
+    filterBtns.forEach(b => b.setAttribute("aria-pressed", b.dataset.f === f));
+  }
+
+  function show(i) {
+    at = (i + shown.length) % shown.length;
+    const p = shown[at];
+    lbImg.src = p.src; lbImg.alt = p.caption || ""; lbCap.textContent = p.caption || "";
+    $("lb-prev").hidden = $("lb-next").hidden = shown.length < 2;
+  }
+  function open(i) { show(i); lb.showModal(); }
+
+  filterBtns.forEach(b => b.addEventListener("click", () => render(b.dataset.f)));
+  $("lb-prev").addEventListener("click", () => show(at - 1));
+  $("lb-next").addEventListener("click", () => show(at + 1));
+  $("lb-close").addEventListener("click", () => lb.close());
+  lb.addEventListener("click", e => { if (e.target === lb) lb.close(); });   // click on the backdrop
+  lb.addEventListener("keydown", e => {
+    if (e.key === "ArrowLeft") show(at - 1);
+    if (e.key === "ArrowRight") show(at + 1);
+  });
+
+  render(["install", "clean", "replace"].includes(location.hash.slice(1)) ? location.hash.slice(1) : "all");
+})();
+</script>
+</body>
+</html>
