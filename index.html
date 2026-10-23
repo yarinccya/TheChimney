@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>THECHEMINEYS | Chimney replacement, cleaning and new installations</title>
+<meta name="description" content="THECHEMINEYS replaces, cleans and installs chimneys for homes.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0b2545;
+    --navy-deep: #07172c;
+    --red: #c8102e;
+    --red-dark: #8f0b21;
+    --cream: #f7f1e3;
+    --font-display: "Barlow Condensed", "Arial Narrow", Impact, sans-serif;
+    --font-body: "Barlow", "Helvetica Neue", Arial, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; overflow: hidden; overscroll-behavior: none; background: var(--navy-deep); color: var(--cream); font-family: var(--font-body); }
+  body { position: fixed; inset: 0; width: 100%; }
+
+  canvas#stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+
+  .scrim { position: fixed; inset: 0; pointer-events: none;
+    background:
+      radial-gradient(ellipse 70% 58% at 50% 54%, rgba(7,23,44,.62) 0%, rgba(7,23,44,.3) 60%, rgba(7,23,44,0) 100%),
+      linear-gradient(to top, rgba(7,23,44,.7) 0%, rgba(7,23,44,.3) 30%, rgba(7,23,44,0) 55%),
+      linear-gradient(to bottom, rgba(7,23,44,.55) 0%, rgba(7,23,44,0) 24%),
+      linear-gradient(rgba(7,23,44,.34), rgba(7,23,44,.34)); }
+
+  .topbar { position: fixed; top: 0; left: 0; right: 0; z-index: 4; background: var(--navy-deep); border-bottom: 3px solid var(--red);
+    display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+    padding: calc(.55rem + env(safe-area-inset-top)) clamp(1.25rem, 4vw, 3.5rem) .55rem;
+    font-weight: 600; font-size: .95rem; }
+  .topbar .perks { color: rgba(247,241,227,.85); }
+  .topbar .perks span { color: var(--red); margin: 0 .5em; }
+  .topbar a { color: var(--cream); text-decoration: none; font-weight: 600; }
+  .topbar a:hover { text-decoration: underline; }
+
+  header { position: fixed; top: calc(2.6rem + env(safe-area-inset-top)); left: 0; right: 0; display: flex; justify-content: space-between; align-items: center;
+    padding: 1.1rem clamp(1.25rem, 4vw, 3.5rem) 0; z-index: 3; }
+  .brand { font-family: var(--font-display); font-weight: 800; font-size: clamp(1.5rem, 2.8vw, 2.2rem); line-height: 1;
+    text-transform: uppercase; letter-spacing: .02em; color: var(--cream); text-decoration: none; text-shadow: 0 2px 10px rgba(0,0,0,.5); }
+  .brand i { font-style: normal; color: var(--red); margin-right: .3em; text-shadow: none; -webkit-text-stroke: 1px var(--cream); }
+
+  .steps { display: flex; gap: .6rem; list-style: none; padding: 0; }
+  .steps li { display: block; }
+  .steps button { position: relative; overflow: hidden; display: inline-flex; align-items: center; gap: .5rem;
+    font-family: var(--font-display); font-size: 1.35rem; font-weight: 800; text-transform: uppercase; letter-spacing: .06em;
+    padding: .55rem 1.15rem .5rem; min-height: 0; border-radius: 3px; cursor: pointer;
+    background: var(--cream); color: var(--navy); border: 0; border-bottom: 5px solid var(--navy);
+    box-shadow: 0 6px 18px rgba(0,0,0,.35);
+    transition: transform .18s cubic-bezier(.2,.8,.2,1), background .2s, color .2s, box-shadow .2s, border-color .2s; }
+  .steps button::before { content: ""; position: absolute; inset: 0; background: var(--red); transform: translateY(101%); transition: transform .22s cubic-bezier(.2,.8,.2,1); z-index: 0; }
+  .steps button > * { position: relative; z-index: 1; }
+  .steps .ico { display: inline-block; width: 0; opacity: 0; overflow: hidden; font-size: .9em; transform: scale(.4) rotate(-90deg); transition: width .22s, opacity .22s, transform .3s; }
+  .steps button:hover:not(:disabled), .steps button:focus-visible { transform: translateY(-4px); color: var(--cream); border-bottom-color: var(--red-dark); box-shadow: 0 12px 24px rgba(0,0,0,.45); }
+  .steps button:hover:not(:disabled)::before, .steps button:focus-visible::before { transform: translateY(0); }
+  .steps button:hover:not(:disabled) .ico, .steps button:focus-visible .ico { width: 1em; opacity: 1; transform: scale(1) rotate(0); }
+  .steps button:active:not(:disabled) { transform: translateY(0); box-shadow: 0 3px 8px rgba(0,0,0,.4); }
+  .steps button:disabled { opacity: .55; cursor: progress; }
+  .steps button:hover:not(:disabled), .steps button:active:not(:disabled) { background: var(--cream); border-bottom-width: 5px; }
+  .steps li.done button:hover:not(:disabled) { background: var(--navy); }
+  .steps li.on button:hover:not(:disabled) { background: var(--red); }
+  .steps li.on button:hover:not(:disabled)::before { display: none; }
+  .steps li.done button { background: var(--navy); color: var(--cream); border-bottom-color: var(--cream); }
+  .steps li.on button { background: var(--red); color: var(--cream); border-bottom-color: var(--red-dark); }
+  .steps li.on button::before { display: none; }
+  .steps li.on .ico { width: 1em; opacity: 1; transform: none; }
+
+  .copy { position: fixed; left: clamp(1.25rem, 4vw, 3.5rem); right: clamp(1.25rem, 4vw, 3.5rem);
+    top: 50%; transform: translateY(-50%); padding-top: 3rem; z-index: 3; max-width: 64rem; margin: 0 auto; text-align: center; }
+  .stripes { width: 6.5rem; height: 14px; margin: 0 auto 1.1rem;
+    background: linear-gradient(to bottom, var(--red) 0 33.3%, var(--cream) 33.3% 66.6%, #2a5db0 66.6% 100%); }
+  h1 { font-family: var(--font-display); font-size: clamp(2.6rem, 7vw, 6.4rem); line-height: .92; letter-spacing: .005em; font-weight: 800;
+    text-transform: uppercase; white-space: pre-line; text-shadow: 0 2px 4px rgba(0,0,0,.55), 0 4px 30px rgba(0,0,0,.7); }
+  p.lead { margin: 1.1rem auto 0; font-size: clamp(1.05rem, 1.7vw, 1.3rem); line-height: 1.5; max-width: 36rem; color: #fff; font-weight: 600; text-shadow: 0 1px 3px rgba(0,0,0,.85), 0 2px 18px rgba(0,0,0,.7); }
+  .text { transition: opacity .45s ease, transform .45s ease; }
+  .text.out { opacity: 0; transform: translateY(.6rem); }
+
+  .actions { margin-top: 1.7rem; display: flex; flex-wrap: wrap; justify-content: center; gap: .8rem; transition: opacity .35s ease; }
+  .actions.hide { opacity: 0; pointer-events: none; }
+  button, a.btn { font-family: var(--font-display); font-weight: 800; font-size: 1.3rem; text-transform: uppercase; letter-spacing: .05em; cursor: pointer; text-decoration: none;
+    padding: .8rem 1.7rem; border-radius: 3px; border: 0; border-bottom: 5px solid var(--red-dark); background: var(--red); color: var(--cream);
+    transition: background .2s, transform .12s, border-bottom-width .12s; min-height: 3.2rem; display: inline-flex; align-items: center; }
+  button:hover:not(:disabled), a.btn:hover { background: #e0173a; }
+  button:active:not(:disabled), a.btn:active { transform: translateY(3px); border-bottom-width: 2px; }
+  button:disabled { cursor: progress; opacity: .6; }
+  button.ghost, a.btn.ghost { background: transparent; border: 2px solid var(--cream); border-bottom-width: 5px; color: var(--cream); }
+  button.ghost:hover:not(:disabled), a.btn.ghost:hover { background: rgba(247,241,227,.16); }
+  button:focus-visible, a:focus-visible { outline: 3px solid var(--cream); outline-offset: 3px; }
+  [hidden] { display: none !important; }
+
+  @media (max-width: 720px) {
+    .topbar .perks { display: none; }
+    .topbar { justify-content: center; }
+    header { flex-direction: column; align-items: center; gap: .7rem; padding-top: .8rem; }
+    .steps { gap: .35rem; }
+    .steps button { font-size: 1rem; padding: .45rem .7rem .4rem; }
+    .actions button, .actions a.btn { flex: 1 1 100%; justify-content: center; }
+  }
+</style>
+</head>
+<body>
+  <canvas id="stage" role="img" aria-label="Chimney footage"></canvas>
+  <div class="scrim"></div>
+
+  <div class="topbar">
+    <div class="perks">Free Estimates<span>&#9733;</span>Licensed &amp; Insured<span>&#9733;</span>Family Owned</div>
+    <a href="tel:+15555550123">Call (555) 555-0123</a>
+  </div>
+
+  <header>
+    <a class="brand" href="#" aria-label="THECHEMINEYS home"><i>&#9733;</i>THECHEMINEYS</a>
+    <ol class="steps" aria-label="Choose a service">
+      <li data-k="0"><button type="button" title="Watch: new installations"><span class="ico" aria-hidden="true">&#9733;</span><span>Install</span></button></li>
+      <li data-k="1"><button type="button" title="Watch: chimney cleaning"><span class="ico" aria-hidden="true">&#9733;</span><span>Clean</span></button></li>
+      <li data-k="2"><button type="button" title="Watch: chimney replacement"><span class="ico" aria-hidden="true">&#9733;</span><span>Replace</span></button></li>
+    </ol>
+  </header>
+
+  <main class="copy">
+    <div class="text" id="text" aria-live="polite">
+      <div class="stripes" aria-hidden="true"></div>
+      <h1 id="title"></h1>
+      <p class="lead" id="lead"></p>
+    </div>
+    <div class="actions" id="actions">
+      <button id="next" type="button" disabled>Loading…</button>
+      <a class="btn" id="quote" href="mailto:info@thechemineys.com?subject=Free%20chimney%20estimate" hidden>Get a free estimate</a>
+      <a class="btn ghost" id="call" href="tel:+15555550123" hidden>Call now</a>
+      <button id="replay" class="ghost" type="button" hidden>Watch again</button>
+    </div>
+  </main>
+
+<script>
+(() => {
+  const FPS = 30, DISSOLVE = 500, AHEAD = 18, WARM = 12, IW = 1920, IH = 1280;
+  const SEQS = [
+    { dir: "frames/s1/", n: 149, label: "See new installations",
+      title: "No chimney yet?\nWe build one.",
+      lead: "New chimney installations for homes without a flue. From the hearth to the cap, built and sealed for safe burning." },
+    { dir: "frames/s2/", n: 150, label: "See chimney cleaning",
+      title: "Clean flue,\nsafe fire.",
+      lead: "A full sweep and inspection that clears soot and creosote before they turn into a fire risk." },
+    { dir: "frames/s3/", n: 150, label: "See chimney replacement",
+      title: "Old chimney out.\nNew one up.",
+      lead: "Crumbling brick and failing flashing replaced with a rebuilt stack that keeps your roof dry and your home safe." }
+  ];
+  const START = {
+    title: "Chimneys\ndone right.",
+    lead: "Chimney replacement, cleaning and new installations for your home. Honest work, done right."
+  };
+  // Frames are decoded off the main thread (fetch -> Blob -> ImageBitmap). That needs http(s); opened as a plain file it falls back to <img>.
+  const USE_BMP = !!(window.createImageBitmap && window.fetch) && location.protocol !== "file:";
+
+  const $ = id => document.getElementById(id);
+  const canvas = $("stage"), ctx = canvas.getContext("2d");
+  const titleEl = $("title"), leadEl = $("lead"), textEl = $("text"), actions = $("actions");
+  const nextBtn = $("next"), quoteBtn = $("quote"), callBtn = $("call"), replayBtn = $("replay");
+  const stepLis = [...document.querySelectorAll(".steps li")];
+  const brand = document.querySelector(".brand");
+
+  const startImg = new Image();
+  let held = startImg;       // the picture on screen while idle (used to repaint after a resize)
+  let step = 0;              // clip the main button plays next
+  let playing = -1;          // clip currently playing
+  let run = 0;               // bumps on every action so older animations stop
+  const loaded = SEQS.map(() => false);
+  const blobs = SEQS.map(() => []);    // compressed frames
+  const frames = SEQS.map(() => []);   // <img> fallback
+  const bmps = SEQS.map(() => []);     // decoded frames: undefined = not requested, null = decoding, bitmap = ready
+
+  /* ---------- drawing (all clips + start picture share one 3:2 frame, so framing never changes) ---------- */
+  function size() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(innerWidth * dpr);
+    canvas.height = Math.round(innerHeight * dpr);
+    paint(held, 1);
+  }
+  function paint(src, alpha) {
+    const iw = src.naturalWidth || src.width, ih = src.naturalHeight || src.height;
+    if (!iw) return;
+    const cw = canvas.width, ch = canvas.height, s = Math.max(cw / iw, ch / ih);
+    const w = iw * s, h = ih * s;
+    ctx.globalAlpha = alpha;
+    ctx.drawImage(src, (cw - w) / 2, (ch - h) / 2, w, h);
+    ctx.globalAlpha = 1;
+  }
+  function snapshot() { // freeze whatever is on screen, so a transition can start from it even mid-clip
+    const c = document.createElement("canvas");
+    c.width = canvas.width; c.height = canvas.height;
+    c.getContext("2d").drawImage(canvas, 0, 0);
+    return c;
+  }
+  function setHeld(x) { if (held && held !== x && held.close) held.close(); held = x; }
+  const raf = () => new Promise(r => requestAnimationFrame(r));
+  const ease = t => t * t * (3 - 2 * t);
+
+  /* ---------- frame decoding, never on the main thread ---------- */
+  function ensure(k, i) {
+    if (!USE_BMP || bmps[k][i] !== undefined || !blobs[k][i]) return;
+    bmps[k][i] = null;
+    const sc = Math.min(1, Math.max(canvas.width / IW, canvas.height / IH));   // no point decoding more pixels than the screen shows
+    const opts = sc < 0.98 ? { resizeWidth: Math.round(IW * sc), resizeHeight: Math.round(IH * sc), resizeQuality: "medium" } : undefined;
+    const keep = b => { if (bmps[k][i] === null) bmps[k][i] = b; else b.close(); };
+    createImageBitmap(blobs[k][i], opts).then(keep).catch(() => createImageBitmap(blobs[k][i]).then(keep).catch(() => {}));
+  }
+  function release(k, upTo) {
+    for (let i = 0; i < upTo; i++) { const b = bmps[k][i]; if (b && b.close) b.close(); if (b !== undefined) bmps[k][i] = undefined; }
+  }
+  const releaseAll = k => release(k, SEQS[k].n);
+  // Decode the first frames of a clip BEFORE it is clicked (after load, after the previous clip, on hover), so it can start instantly.
+  function warm(k) {
+    if (!loaded[k] || !USE_BMP) return;
+    SEQS.forEach((_, j) => { if (j !== k && j !== playing) releaseAll(j); });
+    for (let i = 0; i < WARM; i++) ensure(k, i);
+  }
+  function pick(k, i) { // newest ready frame at or before i; never waits
+    if (!USE_BMP) return frames[k][i];
+    for (let j = i; j >= Math.max(0, i - 12); j--) { const b = bmps[k][j]; if (b) return b; }
+    return null;
+  }
+
+  // Plays a clip. For the first DISSOLVE ms it fades in over the previous picture while already moving.
+  async function play(k, id, from) {
+    const n = SEQS[k].n;
+    playing = k;
+    warm(k);
+    const w0 = performance.now();
+    while (USE_BMP && !bmps[k][0] && performance.now() - w0 < 1500) { // normally 0 ms: it was warmed already
+      if (id !== run) return false;
+      await new Promise(r => setTimeout(r, 6));
+    }
+    if (id !== run) return false;
+    const t0 = performance.now();
+    let last = -1, freed = 0;
+    for (;;) {
+      if (id !== run) { if (playing === k) playing = -1; releaseAll(k); return false; }
+      const el = performance.now() - t0;
+      const i = Math.min(Math.floor(el / (1000 / FPS)), n - 1);
+      for (let j = i; j < Math.min(i + AHEAD, n); j++) ensure(k, j);
+      if (i - 3 > freed) { release(k, i - 3); freed = i - 3; }
+      if (i !== last || el < DISSOLVE) {
+        const src = pick(k, i);
+        if (src) { if (el < DISSOLVE) { paint(from, 1); paint(src, ease(el / DISSOLVE)); } else paint(src, 1); }
+        last = i;
+      }
+      if (i >= n - 1 && el >= DISSOLVE) break;
+      await raf();
+    }
+    const end = USE_BMP ? await createImageBitmap(blobs[k][n - 1]).catch(() => null) : frames[k][n - 1];
+    if (id !== run) { if (end && end.close && USE_BMP) end.close(); return false; }
+    if (end) { paint(end, 1); setHeld(end); }
+    if (playing === k) playing = -1;
+    releaseAll(k);
+    return true;
+  }
+  async function dissolve(from, to, id) {
+    const t0 = performance.now();
+    for (;;) {
+      if (id !== run) return false;
+      const t = Math.min((performance.now() - t0) / DISSOLVE, 1);
+      paint(from, 1); paint(to, ease(t));
+      if (t >= 1) break;
+      await raf();
+    }
+    setHeld(to);
+    return true;
+  }
+
+  /* ---------- loading ---------- */
+  async function loadSeq(k) {
+    const s = SEQS[k], url = i => s.dir + "f_" + String(i + 1).padStart(3, "0") + ".webp";
+    if (USE_BMP) {
+      let p = 0;
+      await Promise.all(Array.from({ length: 6 }, async () => {
+        while (p < s.n) {
+          const i = p++;
+          try { blobs[k][i] = await (await fetch(url(i))).blob(); } catch (e) { blobs[k][i] = null; }
+        }
+      }));
+    } else {
+      await Promise.all(Array.from({ length: s.n }, (_, i) => new Promise(res => {
+        const im = new Image(); im.onload = im.onerror = res; im.src = url(i); frames[k][i] = im;
+      })));
+    }
+    loaded[k] = true; refreshUI(); if (k === step) warm(k);
+  }
+  (async () => { for (let k = 0; k < SEQS.length; k++) await loadSeq(k); })();
+
+  /* ---------- UI ---------- */
+  function setText(t, l) { titleEl.textContent = t; leadEl.textContent = l; }
+  function markSteps(active) {
+    stepLis.forEach(li => {
+      const k = +li.dataset.k, b = li.firstElementChild;
+      li.classList.toggle("on", k === active);
+      li.classList.toggle("done", active >= 0 && k < active);
+      if (k === active) b.setAttribute("aria-current", "true"); else b.removeAttribute("aria-current");
+    });
+  }
+  function refreshUI() {
+    stepLis.forEach(li => { li.firstElementChild.disabled = !loaded[+li.dataset.k]; });
+    if (step < SEQS.length) {
+      const ready = loaded[step];
+      nextBtn.disabled = !ready;
+      nextBtn.textContent = ready ? (step === 0 ? "See how we work" : SEQS[step].label) : "Loading\u2026";
+    }
+  }
+  function setButtons(atEnd) {
+    nextBtn.hidden = atEnd;
+    quoteBtn.hidden = callBtn.hidden = replayBtn.hidden = !atEnd;
+  }
+  function showStart() { step = 0; setText(START.title, START.lead); markSteps(-1); setButtons(false); refreshUI(); warm(0); }
+  function reveal(focusEl) {
+    textEl.classList.remove("out"); actions.classList.remove("hide");
+    if (focusEl) focusEl.focus({ preventScroll: true });
+  }
+
+  /* ---------- actions ---------- */
+  async function go(k, viaButton) {
+    if (!loaded[k]) return;
+    const id = ++run, seq = SEQS[k], from = snapshot();
+    actions.classList.add("hide"); textEl.classList.add("out");
+    markSteps(k);
+    if (!await play(k, id, from)) return;
+    step = k + 1;
+    setText(seq.title, seq.lead);
+    const atEnd = step >= SEQS.length;
+    setButtons(atEnd); refreshUI();
+    if (!atEnd) warm(step);
+    reveal(viaButton ? (atEnd ? quoteBtn : nextBtn) : null);
+  }
+  async function goStart() {
+    const id = ++run;
+    actions.classList.add("hide"); textEl.classList.add("out");
+    if (!await dissolve(snapshot(), startImg, id)) return;
+    showStart(); reveal(nextBtn);
+  }
+
+  nextBtn.addEventListener("click", () => go(step, true));
+  replayBtn.addEventListener("click", goStart);
+  brand.addEventListener("click", e => { e.preventDefault(); if (held !== startImg || run) goStart(); });
+  stepLis.forEach(li => {
+    const b = li.firstElementChild, k = +li.dataset.k;
+    ["pointerenter", "pointerdown", "focus"].forEach(ev => b.addEventListener(ev, () => warm(k)));
+    b.addEventListener("click", () => go(k, false));
+  });
+  ["pointerenter", "pointerdown", "focus"].forEach(ev => nextBtn.addEventListener(ev, () => warm(step)));
+  addEventListener("resize", size);
+
+  startImg.onload = () => { size(); };
+  startImg.src = "frames/start.webp";
+  size();
+  showStart();
+})();
+</script>
+</body>
+</html>
