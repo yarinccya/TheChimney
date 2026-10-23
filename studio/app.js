@@ -56,11 +56,40 @@
     return data;
   }
 
+  /* ---------- steps (one block, one step at a time) ---------- */
+  function goStep(name) {
+    for (const s of document.querySelectorAll(".step")) s.classList.toggle("on", s.dataset.step === String(name));
+    const n = name === "login" ? 0 : Math.min(+name, 4);
+    $("progress").hidden = !n;
+    for (const d of $("progress").children) {
+      d.classList.toggle("on", +d.dataset.s === n);
+      d.classList.toggle("done", +d.dataset.s < n);
+    }
+  }
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-go]");
+    if (b) goStep(b.dataset.go);
+  });
+
+  // Keep an element at a fixed aspect ratio, as large as its .fitbox parent allows.
+  const sized = new Map();
+  const applySize = (el, [w, h]) => {
+    const box = el.parentElement, s = Math.min(box.clientWidth / w, box.clientHeight / h);
+    if (s > 0) { el.style.width = `${w * s}px`; el.style.height = `${h * s}px`; }
+  };
+  const fitObserver = new ResizeObserver((entries) => {
+    for (const { target } of entries) for (const [el, wh] of sized) if (el.parentElement === target) applySize(el, wh);
+  });
+  function sizeTo(el, w, h) {
+    sized.set(el, [w, h]);
+    fitObserver.observe(el.parentElement);
+    applySize(el, [w, h]);
+  }
+
   /* ---------- login ---------- */
   function showApp(on) {
-    $("loginView").hidden = on;
-    $("app").hidden = !on;
     $("logout").hidden = !on;
+    goStep(on ? 1 : "login");
   }
 
   function logout() {
@@ -93,13 +122,14 @@
     $("view").width = mask.width;
     $("view").height = mask.height;
     history = [];
-    $("markCard").hidden = $("chimCard").hidden = $("go").hidden = false;
     redraw();
     updateGo();
-    $("markCard").scrollIntoView({ behavior: "smooth" });
+    goStep(2);
+    sizeTo($("stage"), mask.width, mask.height);
   }
-  $("camInput").addEventListener("change", (e) => onPhoto(e.target.files[0]));
-  $("galInput").addEventListener("change", (e) => onPhoto(e.target.files[0]));
+  for (const id of ["camInput", "galInput"]) {
+    $(id).addEventListener("change", (e) => { onPhoto(e.target.files[0]); e.target.value = ""; });
+  }
 
   /* ---------- 2. mask painting ---------- */
   function redMask(w, h) {
@@ -180,8 +210,8 @@
     mode = b.dataset.mode;
     for (const x of $("modeSeg").children) x.classList.toggle("on", x === b);
     $("markHint").innerHTML = mode === "replace"
-      ? "צבע באצבע את <b>כל הארובה הישנה</b> (כולל הכובע והבסיס) וגם את הגובה שהארובה החדשה תתפוס. עדיף לסמן קצת יותר מדי."
-      : "צבע באצבע את האזור על הגג שבו תעמוד הארובה, <b>כולל כל הגובה שלה מעל הגג</b>. עדיף לסמן קצת יותר מדי מאשר מעט מדי.";
+      ? "צבע באצבע את <b>כל הארובה הישנה</b>, כולל הכובע והבסיס."
+      : "צבע באצבע את המקום על הגג שבו תעמוד הארובה.";
   });
 
   /* ---------- 3. chimney ---------- */
@@ -248,8 +278,10 @@
   function updateGo() {
     const ready = photo && !maskEmpty() && (catalogPick !== null || uploads.length > 0);
     $("go").disabled = !ready;
-    $("go").title = ready ? "" : "צריך: תמונת בית, סימון על הגג ותמונת ארובה";
+    $("go").title = ready ? "" : "צריך לבחור או להעלות תמונת ארובה";
+    $("markNext").disabled = maskEmpty();
   }
+  $("markNext").addEventListener("click", () => goStep(3));
 
   /* ---------- generate ---------- */
   const SEND_MAX = 2048;
@@ -399,48 +431,55 @@
     return { box, setAfter: (c) => { box.replaceChild(c, box.firstChild); } };
   }
 
-  function fileName(i) {
+  function fileName() {
     const d = new Date();
     const pad = (n) => String(n).padStart(2, "0");
-    return `chimney-${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}-${i + 1}.jpg`;
+    return `chimney-${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}.jpg`;
   }
 
-  function showResult(slot, i, original, crop, gen, smart) {
-    slot.innerHTML = "";
-    const plain = rectMask(gen.width, gen.height);
-    let current = compose(original, crop, gen, smart);
+  /* ---------- 5. result ---------- */
+  let result = null; // { original, crop, gen, smart, plain, current, cmp }
+
+  function showResult(original, crop, gen, smart) {
+    const current = compose(original, crop, gen, smart);
     const cmp = compareWidget(original, current);
-    const keepLbl = document.createElement("label");
-    keepLbl.className = "switch";
-    keepLbl.innerHTML = '<input type="checkbox" checked> מיזוג חכם – שאר התמונה נשאר מקורי (כבה אם משהו נחתך)';
-    keepLbl.querySelector("input").addEventListener("change", (e) => {
-      current = compose(original, crop, gen, e.target.checked ? smart : plain);
-      cmp.setAfter(current);
-    });
-    const row = document.createElement("div");
-    row.className = "row split";
-    const dl = document.createElement("button");
-    dl.className = "btn primary"; dl.textContent = "⬇️ הורדה";
-    dl.addEventListener("click", () => current.toBlob((b) => {
-      const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(b), download: fileName(i) });
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-    }, "image/jpeg", 0.95));
-    row.appendChild(dl);
-    if (navigator.canShare) {
-      const sh = document.createElement("button");
-      sh.className = "btn"; sh.textContent = "📤 שליחה ללקוח";
-      sh.addEventListener("click", () => current.toBlob(async (b) => {
-        const file = new File([b], fileName(i), { type: "image/jpeg" });
-        if (navigator.canShare({ files: [file] })) {
-          try { await navigator.share({ files: [file], title: "הדמיית ארובה" }); } catch {}
-        }
-      }, "image/jpeg", 0.95));
-      row.appendChild(sh);
-    }
-    slot.append(cmp.box, keepLbl, row);
+    result = { original, crop, gen, smart, plain: rectMask(gen.width, gen.height), current, cmp };
+    $("keep").checked = true;
+    $("resultBox").replaceChildren(cmp.box);
+    goStep(5);
+    sizeTo(cmp.box, original.width, original.height);
   }
 
+  $("keep").addEventListener("change", (e) => {
+    if (!result) return;
+    result.current = compose(result.original, result.crop, result.gen, e.target.checked ? result.smart : result.plain);
+    result.cmp.setAfter(result.current);
+  });
+
+  $("download").addEventListener("click", () => result && result.current.toBlob((b) => {
+    const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(b), download: fileName() });
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  }, "image/jpeg", 0.95));
+
+  $("share").hidden = !navigator.canShare;
+  $("share").addEventListener("click", () => result && result.current.toBlob(async (b) => {
+    const file = new File([b], fileName(), { type: "image/jpeg" });
+    if (navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: "הדמיית ארובה" }); } catch {}
+    }
+  }, "image/jpeg", 0.95));
+
+  // New customer: clear the photo and marking, keep the chosen chimney.
+  $("restart").addEventListener("click", () => {
+    photo = mask = result = null;
+    history = [];
+    $("notes").value = "";
+    $("resultBox").replaceChildren();
+    goStep(1);
+  });
+
+  /* ---------- 4. generate ---------- */
   $("go").addEventListener("click", async () => {
     $("go").disabled = true;
     const original = photo;
@@ -457,30 +496,13 @@
     maskC.getContext("2d").drawImage(mask, crop.x / k, crop.y / k, crop.w / k, crop.h / k, 0, 0, cw, ch);
     const zoomed = crop.w < original.width * 0.98;
 
-    let refs;
-    try { refs = (await refImages()).map((c) => toB64(c, 0.9)); }
-    catch { alert("לא הצלחתי לטעון את תמונות הארובה מהקטלוג"); updateGo(); return; }
-
-    const common = {
-      refs,
-      aspect: crop.aspect,
-      size: "2K",
-      chimneyName: catalogPick !== null ? catalog[catalogPick].name : "",
-      chimneyDescription: $("desc").value.trim(),
-    };
-    const body = {
-      ...common,
-      mode,
-      house: toB64(cropC, 0.93),
-      guide: toB64(guideImage(cropC, maskC), 0.85),
-      context: zoomed ? toB64(fit(original, 1024), 0.85) : undefined,
-      notes: $("notes").value.trim(),
-    };
-    const results = $("results");
-    results.innerHTML = "";
-    $("resCard").hidden = false;
-    $("resCard").scrollIntoView({ behavior: "smooth" });
+    $("working").hidden = false;
+    $("failed").hidden = true;
+    $("stageText").textContent = "שלב 1/2: בונה ארובה…";
+    $("timer").textContent = "0";
+    goStep(4);
     const started = Date.now();
+    const t = setInterval(() => { $("timer").textContent = Math.round((Date.now() - started) / 1000); }, 1000);
 
     const asCrop = async (b64) => {
       const bmp = await loadBitmap("data:image/jpeg;base64," + b64);
@@ -490,27 +512,39 @@
       return c;
     };
 
-    const slot = document.createElement("div");
-    slot.className = "result";
-    slot.innerHTML = '<div class="loading"><div class="spinner"></div><div><span class="st">שלב 1/2: בונה ארובה…</span> <span class="t">0</span> שנ׳</div><small>בדרך כלל 1–2 דקות</small></div>';
-    results.appendChild(slot);
-    const t = setInterval(() => { const el = slot.querySelector(".t"); if (el) el.textContent = Math.round((Date.now() - started) / 1000); }, 1000);
     try {
-      const first = (await api(body)).image;
-      slot.querySelector(".st").textContent = "שלב 2/2: ליטוש ריאליזם…";
+      let refs;
+      try { refs = (await refImages()).map((c) => toB64(c, 0.9)); }
+      catch { throw new Error("לא הצלחתי לטעון את תמונות הארובה מהקטלוג"); }
+
+      const common = {
+        refs,
+        aspect: crop.aspect,
+        size: "2K",
+        chimneyName: catalogPick !== null ? catalog[catalogPick].name : "",
+        chimneyDescription: $("desc").value.trim(),
+      };
+      const first = (await api({
+        ...common,
+        mode,
+        house: toB64(cropC, 0.93),
+        guide: toB64(guideImage(cropC, maskC), 0.85),
+        context: zoomed ? toB64(fit(original, 1024), 0.85) : undefined,
+        notes: $("notes").value.trim(),
+      })).image;
+      $("stageText").textContent = "שלב 2/2: ליטוש ריאליזם…";
       const image = (await api({ ...common, action: "refine", house: toB64(await asCrop(first), 0.93) })).image;
       const gen = await asCrop(image);
-      showResult(slot, 0, original, crop, gen, smartMask(cropC, gen, maskC));
+      showResult(original, crop, gen, smartMask(cropC, gen, maskC));
     } catch (err) {
-      slot.innerHTML = "";
-      const p = document.createElement("p");
-      p.className = "fail";
-      p.textContent = `ההדמיה נכשלה: ${err.message}`;
-      slot.appendChild(p);
+      if (!password) return; // logged out (wrong password) - the login step is already showing
+      $("working").hidden = true;
+      $("failed").hidden = false;
+      $("failText").textContent = `ההדמיה נכשלה: ${err.message}`;
     } finally {
       clearInterval(t);
+      updateGo();
     }
-    updateGo();
   });
 
   /* ---------- start ---------- */

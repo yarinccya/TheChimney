@@ -19,153 +19,211 @@
     --red-dark: #8f0b21;
     --cream: #f7f1e3;
     --muted: rgba(247,241,227,.66);
-    --ok: #3fb37f;
   }
   * { box-sizing: border-box; margin: 0; }
-  html, body { background: var(--navy-deep); color: var(--cream); font-family: "Heebo", Arial, sans-serif; }
-  body { min-height: 100vh; padding-bottom: 6rem; }
+  html, body { height: 100%; overflow: hidden; background: var(--navy-deep); color: var(--cream); font-family: "Heebo", Arial, sans-serif; }
+  body { display: flex; flex-direction: column; height: 100dvh; }
   button, input, select, textarea { font: inherit; color: inherit; }
   [hidden] { display: none !important; }
 
-  header { position: sticky; top: 0; z-index: 5; background: var(--navy-deep); border-bottom: 3px solid var(--red);
-    padding: calc(.7rem + env(safe-area-inset-top)) 16px .7rem; display: flex; justify-content: space-between; align-items: center; }
-  header h1 { font-size: 1.15rem; font-weight: 800; letter-spacing: .01em; }
-  header h1 span { color: var(--red); }
+  header { flex: none; background: var(--navy-deep); border-bottom: 3px solid var(--red);
+    padding: calc(.55rem + env(safe-area-inset-top)) 16px .55rem; display: flex; justify-content: space-between; align-items: center; }
+  header img { display: block; height: clamp(26px, 5vw, 36px); width: auto; }
   .link { background: none; border: 0; color: var(--muted); text-decoration: underline; cursor: pointer; font-size: .9rem; }
 
-  main { max-width: 46rem; margin: 0 auto; padding: 1rem 16px; display: grid; gap: 1rem; }
-  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 1rem; }
-  .card h2 { font-size: 1.05rem; font-weight: 800; margin-bottom: .65rem; display: flex; align-items: center; gap: .55rem; }
-  .card h2 b { display: inline-grid; place-items: center; width: 1.7rem; height: 1.7rem; border-radius: 50%; background: var(--red); font-size: .9rem; }
-  .hint { color: var(--muted); font-size: .9rem; line-height: 1.45; margin-bottom: .7rem; }
+  /* the one block everything happens in */
+  .shell { flex: 1; min-height: 0; width: 100%; max-width: 52rem; margin: 0 auto; display: flex; flex-direction: column;
+    padding: .8rem 16px calc(.8rem + env(safe-area-inset-bottom)); gap: .7rem; }
+  .progress { flex: none; display: flex; gap: .4rem; }
+  .progress div { flex: 1; text-align: center; font-size: .8rem; font-weight: 700; color: var(--muted); padding-top: .4rem; border-top: 4px solid var(--line); transition: color .3s, border-color .3s; }
+  .progress div.on { color: var(--cream); border-color: var(--red); }
+  .progress div.done { color: var(--cream); border-color: rgba(200,16,46,.5); }
+
+  .block { flex: 1; min-height: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 1rem; display: flex; flex-direction: column; }
+  .step { display: none; flex: 1; min-height: 0; flex-direction: column; gap: .7rem; animation: in .35s ease; }
+  .step.on { display: flex; }
+  @keyframes in { from { opacity: 0; transform: translateX(-18px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .step { animation: none; } }
+  .step h2 { flex: none; font-size: 1.15rem; font-weight: 800; }
+  .hint { flex: none; color: var(--muted); font-size: .9rem; line-height: 1.4; }
+  .scroll { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: .2rem; padding-inline-end: .2rem; }
+  .fitbox { flex: 1; min-height: 0; display: grid; place-items: center; }
+  .center { flex: 1; min-height: 0; display: grid; place-content: center; justify-items: center; gap: 1rem; text-align: center; }
 
   .btn { display: inline-flex; align-items: center; justify-content: center; gap: .45rem; border: 0; border-radius: 10px;
-    padding: .7rem 1rem; background: rgba(247,241,227,.1); cursor: pointer; font-weight: 600; text-decoration: none; }
+    padding: .75rem 1rem; background: rgba(247,241,227,.1); cursor: pointer; font-weight: 600; text-decoration: none; }
   .btn:hover { background: rgba(247,241,227,.18); }
   .btn.primary { background: var(--red); border-bottom: 3px solid var(--red-dark); font-weight: 800; }
   .btn.primary:hover { background: #e0173a; }
-  .btn.big { width: 100%; padding: 1rem; font-size: 1.15rem; }
+  .btn.big { padding: 1rem 1.4rem; font-size: 1.15rem; min-width: 14rem; }
   .btn:disabled { opacity: .45; cursor: not-allowed; }
   .btn.on { background: var(--cream); color: var(--navy-deep); }
-  .row { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
-  .row.split > * { flex: 1 1 0; }
+  .row { flex: none; display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+  .actions { flex: none; display: flex; gap: .5rem; }
+  .actions .btn { flex: 1; }
+  .actions .btn.primary { flex: 2; }
 
   /* login */
-  .login { max-width: 22rem; margin: 12vh auto 0; text-align: center; }
-  .login input { width: 100%; padding: .85rem 1rem; border-radius: 10px; border: 1px solid var(--line); background: var(--navy-deep); margin: .9rem 0 .6rem; text-align: center; font-size: 1.1rem; }
+  .login { width: min(100%, 22rem); }
+  .login input { width: 100%; padding: .85rem 1rem; border-radius: 10px; border: 1px solid var(--line); background: var(--navy-deep); margin-bottom: .6rem; text-align: center; font-size: 1.1rem; }
   .err { color: #ff8a9a; font-size: .92rem; min-height: 1.3em; }
+  .icon { font-size: 3.2rem; line-height: 1; }
 
-  /* photo + mask editor */
-  .stage { position: relative; border-radius: 10px; overflow: hidden; background: #000; touch-action: none; }
-  .stage canvas { display: block; width: 100%; height: auto; }
-  .stage.paint canvas { cursor: crosshair; }
-  .tools { margin-top: .6rem; }
-  .tools label { display: flex; align-items: center; gap: .5rem; font-size: .9rem; color: var(--muted); flex: 1 1 10rem; }
+  /* mark */
+  .stage { position: relative; border-radius: 10px; overflow: hidden; background: #000; touch-action: none; cursor: crosshair; }
+  .stage canvas { display: block; width: 100%; height: 100%; }
+  .tools label { display: flex; align-items: center; gap: .5rem; font-size: .9rem; color: var(--muted); flex: 1 1 8rem; }
   .tools input[type=range] { flex: 1; accent-color: var(--red); }
-  .seg { display: flex; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); margin-bottom: .7rem; }
-  .seg button { flex: 1; border: 0; padding: .65rem .5rem; background: transparent; cursor: pointer; font-weight: 600; }
+  .tools .btn { padding: .55rem .8rem; }
+  .seg { flex: none; display: flex; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); }
+  .seg button { flex: 1; border: 0; padding: .6rem .5rem; background: transparent; cursor: pointer; font-weight: 600; font-size: .92rem; }
   .seg button.on { background: var(--cream); color: var(--navy-deep); }
 
-  /* catalog */
-  .catalog { display: grid; grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr)); gap: .6rem; }
+  /* chimney */
+  .catalog { display: grid; grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr)); gap: .6rem; }
   .chim { position: relative; border: 2px solid var(--line); border-radius: 10px; background: var(--navy-deep); cursor: pointer; padding: 0; overflow: hidden; text-align: start; }
   .chim img { display: block; width: 100%; aspect-ratio: 1; object-fit: contain; background: #fff; }
-  .chim span { display: block; padding: .45rem .55rem; font-size: .85rem; font-weight: 600; line-height: 1.25; }
+  .chim span { display: block; padding: .4rem .5rem; font-size: .85rem; font-weight: 600; line-height: 1.25; }
   .chim.on { border-color: var(--red); box-shadow: 0 0 0 2px var(--red); }
   .chim .x { position: absolute; top: .3rem; left: .3rem; width: 1.6rem; height: 1.6rem; border-radius: 50%; border: 0; background: rgba(0,0,0,.65); color: #fff; cursor: pointer; }
-  .thumbs { display: flex; gap: .4rem; flex-wrap: wrap; margin-top: .6rem; }
-  .thumbs img { width: 3.6rem; height: 3.6rem; object-fit: contain; background: #fff; border-radius: 6px; }
-  textarea, .field { width: 100%; border-radius: 10px; border: 1px solid var(--line); background: var(--navy-deep); padding: .7rem .8rem; }
-  textarea { min-height: 4.2rem; resize: vertical; }
-  .lbl { display: block; font-size: .88rem; color: var(--muted); margin: .8rem 0 .3rem; }
-  .empty { border: 1px dashed var(--line); border-radius: 10px; padding: .9rem; color: var(--muted); font-size: .9rem; }
+  .thumbs { display: flex; gap: .4rem; flex-wrap: wrap; }
+  .thumbs .chim { width: 3.6rem; }
+  textarea, .field { width: 100%; border-radius: 10px; border: 1px solid var(--line); background: var(--navy-deep); padding: .65rem .8rem; }
+  textarea { min-height: 3.6rem; resize: vertical; }
+  .lbl { display: block; font-size: .88rem; color: var(--muted); margin: .7rem 0 .3rem; }
+  .empty { border: 1px dashed var(--line); border-radius: 10px; padding: .8rem; color: var(--muted); font-size: .9rem; }
 
-  /* results */
-  .result { display: grid; gap: .6rem; }
-  .compare { position: relative; border-radius: 10px; overflow: hidden; background: #000; user-select: none; touch-action: pan-y; }
-  .compare canvas, .compare img { display: block; width: 100%; height: auto; }
-  .compare .handle { position: absolute; top: 0; bottom: 0; width: 3px; background: var(--cream); transform: translateX(50%); box-shadow: 0 0 8px rgba(0,0,0,.6); }
+  /* loading */
+  .spinner { width: 3.2rem; height: 3.2rem; border: 4px solid var(--line); border-top-color: var(--red); border-radius: 50%; animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .stage-text { font-size: 1.1rem; font-weight: 700; }
+  .fail { color: #ff8a9a; font-size: .95rem; max-width: 30rem; }
+
+  /* result */
+  .compare { position: relative; border-radius: 10px; overflow: hidden; background: #000; user-select: none; touch-action: none; }
+  .compare canvas { display: block; width: 100%; height: 100%; }
+  .compare .handle { position: absolute; top: 0; bottom: 0; width: 3px; background: var(--cream); box-shadow: 0 0 8px rgba(0,0,0,.6); }
   .compare .handle::after { content: "⇆"; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 2.2rem; height: 2.2rem; border-radius: 50%;
     background: var(--cream); color: var(--navy-deep); display: grid; place-items: center; font-weight: 800; }
   .compare .tag { position: absolute; top: .5rem; padding: .15rem .5rem; border-radius: 6px; background: rgba(0,0,0,.6); font-size: .8rem; font-weight: 700; }
   .compare .tag.b { right: .5rem; } .compare .tag.a { left: .5rem; }
-  .switch { display: flex; align-items: center; gap: .5rem; font-size: .9rem; color: var(--muted); cursor: pointer; }
+  .switch { flex: none; display: flex; align-items: center; gap: .5rem; font-size: .88rem; color: var(--muted); cursor: pointer; }
   .switch input { width: 1.1rem; height: 1.1rem; accent-color: var(--red); }
 
-  .loading { display: grid; place-items: center; gap: .7rem; padding: 2.2rem 1rem; text-align: center; color: var(--muted); }
-  .spinner { width: 2.6rem; height: 2.6rem; border: 4px solid var(--line); border-top-color: var(--red); border-radius: 50%; animation: spin 1s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .fail { color: #ff8a9a; padding: 1rem; font-size: .92rem; }
+  @media (max-height: 640px) {
+    .hint { display: none; }
+    .shell { padding-top: .5rem; gap: .5rem; }
+    .block { padding: .7rem; }
+  }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>סטודיו <span>הדמיות</span> ארובה</h1>
+  <img src="/logo/logo-on-navy.svg" alt="THECHIMNEYS">
   <button class="link" id="logout" hidden>יציאה</button>
 </header>
 
-<!-- login -->
-<section class="login" id="loginView" hidden>
-  <h2>כניסה פרטית</h2>
-  <form id="loginForm">
-    <input type="password" id="pw" placeholder="סיסמה" autocomplete="current-password" required>
-    <button class="btn primary big" type="submit">כניסה</button>
-  </form>
-  <p class="err" id="loginErr"></p>
-</section>
+<div class="shell">
+  <nav class="progress" id="progress" hidden>
+    <div data-s="1">1 · צילום</div>
+    <div data-s="2">2 · סימון</div>
+    <div data-s="3">3 · ארובה</div>
+    <div data-s="4">4 · תוצאה</div>
+  </nav>
 
-<main id="app" hidden>
-  <!-- 1. photo -->
-  <section class="card">
-    <h2><b>1</b>צילום הבית</h2>
-    <p class="hint">צלם את הבית כך שכל הגג נראה, באור יום. ככל שהתמונה חדה וברורה יותר, התוצאה מדויקת יותר.</p>
-    <div class="row split">
-      <label class="btn primary">📷 צלם עכשיו<input type="file" accept="image/*" capture="environment" id="camInput" hidden></label>
-      <label class="btn">🖼️ מהגלריה<input type="file" accept="image/*" id="galInput" hidden></label>
-    </div>
-  </section>
+  <div class="block">
+    <!-- login -->
+    <section class="step" data-step="login">
+      <form class="center" id="loginForm">
+        <div class="icon">🔒</div>
+        <h2>כניסה פרטית</h2>
+        <div class="login">
+          <input type="password" id="pw" placeholder="סיסמה" autocomplete="current-password" required>
+          <button class="btn primary big" type="submit" style="width:100%">כניסה</button>
+        </div>
+        <p class="err" id="loginErr"></p>
+      </form>
+    </section>
 
-  <!-- 2. mark -->
-  <section class="card" id="markCard" hidden>
-    <h2><b>2</b>סמן איפה הארובה</h2>
-    <div class="seg" id="modeSeg">
-      <button type="button" data-mode="add" class="on">אין ארובה – להוסיף</button>
-      <button type="button" data-mode="replace">יש ארובה ישנה – להחליף</button>
-    </div>
-    <p class="hint" id="markHint">צבע באצבע את האזור על הגג שבו תעמוד הארובה, <b>כולל כל הגובה שלה מעל הגג</b>. עדיף לסמן קצת יותר מדי מאשר מעט מדי.</p>
-    <div class="stage paint" id="stage"><canvas id="view"></canvas></div>
-    <div class="row tools">
-      <label>מברשת <input type="range" id="brush" min="1" max="12" step="0.5" value="4"></label>
-      <button class="btn" type="button" id="eraser">מחק</button>
-      <button class="btn" type="button" id="undo">↶ בטל</button>
-      <button class="btn" type="button" id="clear">נקה</button>
-    </div>
-  </section>
+    <!-- 1. photo -->
+    <section class="step" data-step="1">
+      <div class="center">
+        <div class="icon">🏠</div>
+        <h2>צלם את בית הלקוח</h2>
+        <p class="hint">באור יום, כשכל הגג נראה בבירור.</p>
+        <label class="btn primary big">📷 צלם עכשיו<input type="file" accept="image/*" capture="environment" id="camInput" hidden></label>
+        <label class="btn big">🖼️ בחר מהגלריה<input type="file" accept="image/*" id="galInput" hidden></label>
+      </div>
+    </section>
 
-  <!-- 3. chimney -->
-  <section class="card" id="chimCard" hidden>
-    <h2><b>3</b>בחר ארובה</h2>
-    <div class="catalog" id="catalog"></div>
-    <p class="lbl">או העלה תמונות של הארובה (עד 6, כמה זוויות = דיוק גבוה יותר)</p>
-    <label class="btn">⬆️ העלאת תמונות ארובה<input type="file" accept="image/*" multiple id="refInput" hidden></label>
-    <div class="thumbs" id="refThumbs"></div>
+    <!-- 2. mark -->
+    <section class="step" data-step="2">
+      <div class="seg" id="modeSeg">
+        <button type="button" data-mode="add" class="on">אין ארובה – להוסיף</button>
+        <button type="button" data-mode="replace">יש ארובה ישנה – להחליף</button>
+      </div>
+      <p class="hint" id="markHint">צבע באצבע את המקום על הגג שבו תעמוד הארובה.</p>
+      <div class="fitbox"><div class="stage" id="stage"><canvas id="view"></canvas></div></div>
+      <div class="row tools">
+        <label>מברשת <input type="range" id="brush" min="1" max="12" step="0.5" value="4"></label>
+        <button class="btn" type="button" id="eraser">מחק</button>
+        <button class="btn" type="button" id="undo">↶</button>
+        <button class="btn" type="button" id="clear">נקה</button>
+      </div>
+      <div class="actions">
+        <button class="btn" type="button" data-go="1">→ תמונה אחרת</button>
+        <button class="btn primary" type="button" id="markNext" disabled>המשך ←</button>
+      </div>
+    </section>
 
-    <label class="lbl" for="desc">תיאור הארובה (חומר, צבע, קוטר, סוג כובע) – משפר דיוק</label>
-    <input class="field" id="desc" placeholder="לדוגמה: ארובת נירוסטה מוברשת, קוטר 20 ס״מ, כובע קוני, צווארון שחור">
-    <label class="lbl" for="notes">הערות נוספות (לא חובה)</label>
-    <textarea id="notes" placeholder="לדוגמה: גובה הארובה כ-1.5 מטר מעל הגג, בצד ימין של הרכס"></textarea>
-  </section>
+    <!-- 3. chimney -->
+    <section class="step" data-step="3">
+      <h2>בחר ארובה</h2>
+      <div class="scroll">
+        <div class="catalog" id="catalog"></div>
+        <p class="lbl">או העלה תמונות של הארובה (עד 6 זוויות)</p>
+        <div class="row">
+          <label class="btn">⬆️ העלאת תמונות<input type="file" accept="image/*" multiple id="refInput" hidden></label>
+          <div class="thumbs" id="refThumbs"></div>
+        </div>
+        <label class="lbl" for="desc">תיאור הארובה (חומר, צבע, קוטר, כובע)</label>
+        <input class="field" id="desc" placeholder="לדוגמה: נירוסטה מוברשת, קוטר 20 ס״מ, כובע קוני">
+        <label class="lbl" for="notes">הערות (לא חובה)</label>
+        <textarea id="notes" placeholder="לדוגמה: גובה כ-1.5 מטר מעל הגג"></textarea>
+      </div>
+      <div class="actions">
+        <button class="btn" type="button" data-go="2">→ חזרה</button>
+        <button class="btn primary" type="button" id="go" disabled>✨ צור הדמיה</button>
+      </div>
+    </section>
 
-  <button class="btn primary big" id="go" hidden disabled>✨ צור הדמיה</button>
+    <!-- 4. working -->
+    <section class="step" data-step="4">
+      <div class="center" id="working">
+        <div class="spinner"></div>
+        <div class="stage-text" id="stageText">בונה ארובה…</div>
+        <div class="hint"><span id="timer">0</span> שניות · בדרך כלל 1–2 דקות</div>
+      </div>
+      <div class="center" id="failed" hidden>
+        <div class="icon">⚠️</div>
+        <p class="fail" id="failText"></p>
+        <button class="btn primary" type="button" data-go="3">→ חזרה ונסה שוב</button>
+      </div>
+    </section>
 
-  <!-- results -->
-  <section class="card" id="resCard" hidden>
-    <h2>תוצאה</h2>
-    <p class="hint">גרור את הפס כדי להשוות לפני/אחרי.</p>
-    <div id="results" style="display:grid;gap:1.4rem"></div>
-  </section>
-</main>
+    <!-- 5. result -->
+    <section class="step" data-step="5">
+      <div class="fitbox" id="resultBox"></div>
+      <label class="switch"><input type="checkbox" id="keep" checked> מיזוג חכם – שאר התמונה נשאר מקורי</label>
+      <div class="actions">
+        <button class="btn" type="button" id="restart">🔄 חדש</button>
+        <button class="btn" type="button" id="share" hidden>📤 שליחה</button>
+        <button class="btn primary" type="button" id="download">⬇️ הורדה</button>
+      </div>
+    </section>
+  </div>
+</div>
 
 <script src="/studio/chimneys/catalog.js"></script>
 <script src="/studio/app.js"></script>
