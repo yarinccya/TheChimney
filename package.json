@@ -1,0 +1,8 @@
+{
+  "name": "thechimneys-site",
+  "private": true,
+  "description": "Static site; the only dependency is for the private /studio API function.",
+  "dependencies": {
+    "sharp": "^0.34.3"
+  }
+}

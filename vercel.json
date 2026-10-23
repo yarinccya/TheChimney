@@ -1,0 +1,11 @@
+{
+  "functions": {
+    "api/studio.js": { "maxDuration": 300 }
+  },
+  "headers": [
+    {
+      "source": "/studio/(.*)",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+    }
+  ]
+}
