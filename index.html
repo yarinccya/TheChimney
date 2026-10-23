@@ -138,7 +138,7 @@
 
 <script>
 (() => {
-  const FPS = 30, DISSOLVE = 500, AHEAD = 18, WARM = 12, IW = 1920, IH = 1280;
+  const FPS = 30, DISSOLVE = 500, AHEAD = 18, WARM = 12, IW = 1920, IH = 1280, TEXT_DELAY = 2000;
   const SEQS = [
     { dir: "frames/s1/", n: 149, label: "See new installations",
       title: "No chimney yet?\nWe build one.",
@@ -326,6 +326,8 @@
     const id = ++run, seq = SEQS[k], from = snapshot();
     actions.classList.add("hide"); textEl.classList.add("out");
     markSteps(k);
+    // The clip's text comes in over the footage TEXT_DELAY ms after the click; the buttons wait for the clip to end.
+    setTimeout(() => { if (id !== run) return; setText(seq.title, seq.lead); textEl.classList.remove("out"); }, TEXT_DELAY);
     if (!await play(k, id, from)) return;
     step = k + 1;
     setText(seq.title, seq.lead);
