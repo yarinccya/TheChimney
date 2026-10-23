@@ -155,23 +155,13 @@
     <input class="field" id="desc" placeholder="לדוגמה: ארובת נירוסטה מוברשת, קוטר 20 ס״מ, כובע קוני, צווארון שחור">
     <label class="lbl" for="notes">הערות נוספות (לא חובה)</label>
     <textarea id="notes" placeholder="לדוגמה: גובה הארובה כ-1.5 מטר מעל הגג, בצד ימין של הרכס"></textarea>
-
-    <div class="row split" style="margin-top:.8rem">
-      <label class="lbl" style="margin:0">מספר גרסאות
-        <select class="field" id="variants"><option>1</option><option selected>2</option><option>3</option></select>
-      </label>
-      <label class="lbl" style="margin:0">איכות
-        <select class="field" id="size"><option value="2K" selected>גבוהה (2K)</option><option value="4K">מקסימלית (4K, איטי ויקר יותר)</option><option value="1K">מהירה (1K)</option></select>
-      </label>
-    </div>
-    <label class="switch" style="margin-top:.8rem"><input type="checkbox" id="polish" checked> שלב ליטוש ריאליזם (מומלץ – פי 2 זמן ועלות)</label>
   </section>
 
   <button class="btn primary big" id="go" hidden disabled>✨ צור הדמיה</button>
 
   <!-- results -->
   <section class="card" id="resCard" hidden>
-    <h2>תוצאות</h2>
+    <h2>תוצאה</h2>
     <p class="hint">גרור את הפס כדי להשוות לפני/אחרי.</p>
     <div id="results" style="display:grid;gap:1.4rem"></div>
   </section>

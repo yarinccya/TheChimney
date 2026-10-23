@@ -438,9 +438,7 @@
       }, "image/jpeg", 0.95));
       row.appendChild(sh);
     }
-    const title = document.createElement("strong");
-    title.textContent = `גרסה ${i + 1}`;
-    slot.append(title, cmp.box, keepLbl, row);
+    slot.append(cmp.box, keepLbl, row);
   }
 
   $("go").addEventListener("click", async () => {
@@ -466,7 +464,7 @@
     const common = {
       refs,
       aspect: crop.aspect,
-      size: $("size").value,
+      size: "2K",
       chimneyName: catalogPick !== null ? catalog[catalogPick].name : "",
       chimneyDescription: $("desc").value.trim(),
     };
@@ -478,9 +476,6 @@
       context: zoomed ? toB64(fit(original, 1024), 0.85) : undefined,
       notes: $("notes").value.trim(),
     };
-    const polish = $("polish").checked;
-
-    const n = +$("variants").value;
     const results = $("results");
     results.innerHTML = "";
     $("resCard").hidden = false;
@@ -495,30 +490,26 @@
       return c;
     };
 
-    await Promise.all(Array.from({ length: n }, async (_, i) => {
-      const slot = document.createElement("div");
-      slot.className = "result";
-      slot.innerHTML = `<div class="loading"><div class="spinner"></div><div><span class="st">גרסה ${i + 1}: בונה ארובה…</span> <span class="t">0</span> שנ׳</div><small>${polish ? "שני שלבים, בדרך כלל 1–2 דקות" : "בדרך כלל 20–60 שניות"}</small></div>`;
-      results.appendChild(slot);
-      const t = setInterval(() => { const el = slot.querySelector(".t"); if (el) el.textContent = Math.round((Date.now() - started) / 1000); }, 1000);
-      try {
-        let { image } = await api(body);
-        if (polish) {
-          slot.querySelector(".st").textContent = `גרסה ${i + 1}: ליטוש ריאליזם…`;
-          image = (await api({ ...common, action: "refine", house: toB64(await asCrop(image), 0.93) })).image;
-        }
-        const gen = await asCrop(image);
-        showResult(slot, i, original, crop, gen, smartMask(cropC, gen, maskC));
-      } catch (err) {
-        slot.innerHTML = "";
-        const p = document.createElement("p");
-        p.className = "fail";
-        p.textContent = `גרסה ${i + 1} נכשלה: ${err.message}`;
-        slot.appendChild(p);
-      } finally {
-        clearInterval(t);
-      }
-    }));
+    const slot = document.createElement("div");
+    slot.className = "result";
+    slot.innerHTML = '<div class="loading"><div class="spinner"></div><div><span class="st">שלב 1/2: בונה ארובה…</span> <span class="t">0</span> שנ׳</div><small>בדרך כלל 1–2 דקות</small></div>';
+    results.appendChild(slot);
+    const t = setInterval(() => { const el = slot.querySelector(".t"); if (el) el.textContent = Math.round((Date.now() - started) / 1000); }, 1000);
+    try {
+      const first = (await api(body)).image;
+      slot.querySelector(".st").textContent = "שלב 2/2: ליטוש ריאליזם…";
+      const image = (await api({ ...common, action: "refine", house: toB64(await asCrop(first), 0.93) })).image;
+      const gen = await asCrop(image);
+      showResult(slot, 0, original, crop, gen, smartMask(cropC, gen, maskC));
+    } catch (err) {
+      slot.innerHTML = "";
+      const p = document.createElement("p");
+      p.className = "fail";
+      p.textContent = `ההדמיה נכשלה: ${err.message}`;
+      slot.appendChild(p);
+    } finally {
+      clearInterval(t);
+    }
     updateGo();
   });
 
