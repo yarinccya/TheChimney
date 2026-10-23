@@ -11,6 +11,7 @@
   let mask = null;           // canvas, view resolution, white = work area
   let history = [];
   let erasing = false;
+  let brushSize = 4.5;       // % of the photo width
   let mode = "add";
   let catalogPick = null;
   let uploads = [];          // canvases of uploaded chimney photos
@@ -59,12 +60,6 @@
   /* ---------- steps (one block, one step at a time) ---------- */
   function goStep(name) {
     for (const s of document.querySelectorAll(".step")) s.classList.toggle("on", s.dataset.step === String(name));
-    const n = name === "login" ? 0 : Math.min(+name, 4);
-    $("progress").hidden = !n;
-    for (const d of $("progress").children) {
-      d.classList.toggle("on", +d.dataset.s === n);
-      d.classList.toggle("done", +d.dataset.s < n);
-    }
   }
   document.addEventListener("click", (e) => {
     const b = e.target.closest("[data-go]");
@@ -122,6 +117,7 @@
     $("view").width = mask.width;
     $("view").height = mask.height;
     history = [];
+    $("undo").disabled = true;
     redraw();
     updateGo();
     goStep(2);
@@ -166,42 +162,84 @@
     ctx.globalCompositeOperation = erasing ? "destination-out" : "source-over";
     ctx.strokeStyle = "#fff";
     ctx.lineCap = ctx.lineJoin = "round";
-    ctx.lineWidth = mask.width * $("brush").value / 100;
+    ctx.lineWidth = mask.width * brushSize / 100;
     ctx.beginPath();
     ctx.moveTo(...from);
     ctx.lineTo(...to);
     ctx.stroke();
     redraw();
   }
+
+  // Round preview of the brush under the finger / mouse, like in Paint.
+  function moveCursor(e) {
+    const c = $("cursor"), r = $("view").getBoundingClientRect(), d = r.width * brushSize / 100;
+    c.style.display = "block";
+    c.style.width = c.style.height = `${d}px`;
+    c.style.left = `${e.clientX - r.left}px`;
+    c.style.top = `${e.clientY - r.top}px`;
+    c.classList.toggle("erase", erasing);
+  }
+
+  function pushHistory() {
+    history.push(mask.getContext("2d").getImageData(0, 0, mask.width, mask.height));
+    if (history.length > 15) history.shift();
+    $("undo").disabled = false;
+  }
+
   const view = $("view");
   view.addEventListener("pointerdown", (e) => {
     if (!mask) return;
     view.setPointerCapture(e.pointerId);
-    history.push(mask.getContext("2d").getImageData(0, 0, mask.width, mask.height));
-    if (history.length > 10) history.shift();
+    pushHistory();
     last = point(e);
     stroke(last, last);
+    moveCursor(e);
   });
   view.addEventListener("pointermove", (e) => {
+    moveCursor(e);
     if (!last) return;
     const p = point(e);
     stroke(last, p);
     last = p;
   });
-  const end = () => { if (last) { last = null; updateGo(); } };
+  const end = (e) => {
+    if (e.pointerType !== "mouse") $("cursor").style.display = "none";
+    if (last) { last = null; updateGo(); }
+  };
   view.addEventListener("pointerup", end);
   view.addEventListener("pointercancel", end);
+  view.addEventListener("pointerleave", () => { if (!last) $("cursor").style.display = "none"; });
 
-  $("eraser").addEventListener("click", () => { erasing = !erasing; $("eraser").classList.toggle("on", erasing); });
+  function setTool(erase) {
+    erasing = erase;
+    $("toolBrush").classList.toggle("on", !erase);
+    $("toolEraser").classList.toggle("on", erase);
+    $("toolBrush").setAttribute("aria-pressed", !erase);
+    $("toolEraser").setAttribute("aria-pressed", erase);
+  }
+  $("toolBrush").addEventListener("click", () => setTool(false));
+  $("toolEraser").addEventListener("click", () => setTool(true));
+
+  $("sizes").addEventListener("click", (e) => {
+    const b = e.target.closest(".size");
+    if (!b) return;
+    brushSize = +b.dataset.size;
+    for (const x of $("sizes").children) x.classList.toggle("on", x === b);
+  });
+
+  const flash = (b) => { b.classList.remove("flash"); void b.offsetWidth; b.classList.add("flash"); };
   $("undo").addEventListener("click", () => {
     const prev = history.pop();
-    if (prev) { mask.getContext("2d").putImageData(prev, 0, 0); redraw(); updateGo(); }
+    if (prev) { mask.getContext("2d").putImageData(prev, 0, 0); redraw(); updateGo(); flash($("undo")); }
+    $("undo").disabled = !history.length;
   });
   $("clear").addEventListener("click", () => {
-    history.push(mask.getContext("2d").getImageData(0, 0, mask.width, mask.height));
+    if (maskEmpty()) return;
+    pushHistory();
     mask.getContext("2d").clearRect(0, 0, mask.width, mask.height);
     redraw();
     updateGo();
+    flash($("clear"));
   });
 
   $("modeSeg").addEventListener("click", (e) => {
@@ -389,14 +427,6 @@
     return soft;
   }
 
-  function rectMask(w, h) {
-    const c = canvas(w, h), ctx = c.getContext("2d"), r = Math.max(w, h) * 0.02;
-    ctx.filter = `blur(${r / 2}px)`;
-    ctx.fillStyle = "#fff";
-    ctx.fillRect(r, r, w - 2 * r, h - 2 * r);
-    return c;
-  }
-
   // Put the edited crop back into the full original photo.
   function compose(original, crop, gen, m) {
     const out = canvas(original.width, original.height), ctx = out.getContext("2d");
@@ -438,36 +468,20 @@
   }
 
   /* ---------- 5. result ---------- */
-  let result = null; // { original, crop, gen, smart, plain, current, cmp }
+  let result = null; // the finished photo (canvas)
 
   function showResult(original, crop, gen, smart) {
-    const current = compose(original, crop, gen, smart);
-    const cmp = compareWidget(original, current);
-    result = { original, crop, gen, smart, plain: rectMask(gen.width, gen.height), current, cmp };
-    $("keep").checked = true;
+    result = compose(original, crop, gen, smart);
+    const cmp = compareWidget(original, result);
     $("resultBox").replaceChildren(cmp.box);
     goStep(5);
     sizeTo(cmp.box, original.width, original.height);
   }
 
-  $("keep").addEventListener("change", (e) => {
-    if (!result) return;
-    result.current = compose(result.original, result.crop, result.gen, e.target.checked ? result.smart : result.plain);
-    result.cmp.setAfter(result.current);
-  });
-
-  $("download").addEventListener("click", () => result && result.current.toBlob((b) => {
+  $("download").addEventListener("click", () => result && result.toBlob((b) => {
     const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(b), download: fileName() });
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-  }, "image/jpeg", 0.95));
-
-  $("share").hidden = !navigator.canShare;
-  $("share").addEventListener("click", () => result && result.current.toBlob(async (b) => {
-    const file = new File([b], fileName(), { type: "image/jpeg" });
-    if (navigator.canShare({ files: [file] })) {
-      try { await navigator.share({ files: [file], title: "הדמיית ארובה" }); } catch {}
-    }
   }, "image/jpeg", 0.95));
 
   // New customer: clear the photo and marking, keep the chosen chimney.

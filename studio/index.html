@@ -34,11 +34,6 @@
   /* the one block everything happens in */
   .shell { flex: 1; min-height: 0; width: 100%; max-width: 52rem; margin: 0 auto; display: flex; flex-direction: column;
     padding: .8rem 16px calc(.8rem + env(safe-area-inset-bottom)); gap: .7rem; }
-  .progress { flex: none; display: flex; gap: .4rem; }
-  .progress div { flex: 1; text-align: center; font-size: .8rem; font-weight: 700; color: var(--muted); padding-top: .4rem; border-top: 4px solid var(--line); transition: color .3s, border-color .3s; }
-  .progress div.on { color: var(--cream); border-color: var(--red); }
-  .progress div.done { color: var(--cream); border-color: rgba(200,16,46,.5); }
-
   .block { flex: 1; min-height: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 1rem; display: flex; flex-direction: column; }
   .step { display: none; flex: 1; min-height: 0; flex-direction: column; gap: .7rem; animation: in .35s ease; }
   .step.on { display: flex; }
@@ -72,9 +67,32 @@
   /* mark */
   .stage { position: relative; border-radius: 10px; overflow: hidden; background: #000; touch-action: none; cursor: crosshair; }
   .stage canvas { display: block; width: 100%; height: 100%; }
-  .tools label { display: flex; align-items: center; gap: .5rem; font-size: .9rem; color: var(--muted); flex: 1 1 8rem; }
-  .tools input[type=range] { flex: 1; accent-color: var(--red); }
-  .tools .btn { padding: .55rem .8rem; }
+  .stage .cursor { position: absolute; pointer-events: none; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.6), inset 0 0 0 1px rgba(0,0,0,.6);
+    transform: translate(-50%, -50%); display: none; }
+  .stage .cursor.erase { border-style: dashed; }
+
+  /* Paint-style toolbar */
+  .toolbar { flex: none; display: flex; justify-content: space-between; gap: .5rem; }
+  .group { display: flex; gap: 3px; padding: 3px; background: var(--navy-deep); border: 1px solid var(--line); border-radius: 12px; }
+  .tool, .size { border: 0; border-radius: 9px; background: transparent; color: var(--cream); cursor: pointer; transition: background .15s, color .15s, transform .1s; }
+  .tool { display: grid; justify-items: center; gap: 2px; min-width: 3.4rem; padding: .4rem .45rem .3rem; }
+  .tool svg { width: 22px; height: 22px; fill: currentColor; }
+  .tool span { font-size: .72rem; font-weight: 700; }
+  .tool:hover, .size:hover { background: rgba(247,241,227,.1); }
+  .tool:active, .size:active { transform: scale(.92); }
+  .tool.on { background: var(--red); color: #fff; box-shadow: inset 0 -3px 0 var(--red-dark); }
+  .tool:disabled { opacity: .35; cursor: default; transform: none; background: transparent; }
+  .tool.flash { animation: flash .45s ease; }
+  @keyframes flash { 0% { background: var(--cream); color: var(--navy-deep); } 100% { background: transparent; } }
+  .size { width: 2.6rem; display: grid; place-items: center; }
+  .size i { display: block; width: var(--d); height: var(--d); border-radius: 50%; background: var(--cream); }
+  .size.on { background: var(--cream); }
+  .size.on i { background: var(--red); }
+  @media (max-width: 560px) {
+    .toolbar { flex-wrap: wrap; }
+    .sizes { order: 3; flex: 1 1 100%; justify-content: space-around; }
+    .size { flex: 1; height: 2.4rem; }
+  }
   .seg { flex: none; display: flex; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); }
   .seg button { flex: 1; border: 0; padding: .6rem .5rem; background: transparent; cursor: pointer; font-weight: 600; font-size: .92rem; }
   .seg button.on { background: var(--cream); color: var(--navy-deep); }
@@ -107,8 +125,6 @@
     background: var(--cream); color: var(--navy-deep); display: grid; place-items: center; font-weight: 800; }
   .compare .tag { position: absolute; top: .5rem; padding: .15rem .5rem; border-radius: 6px; background: rgba(0,0,0,.6); font-size: .8rem; font-weight: 700; }
   .compare .tag.b { right: .5rem; } .compare .tag.a { left: .5rem; }
-  .switch { flex: none; display: flex; align-items: center; gap: .5rem; font-size: .88rem; color: var(--muted); cursor: pointer; }
-  .switch input { width: 1.1rem; height: 1.1rem; accent-color: var(--red); }
 
   @media (max-height: 640px) {
     .hint { display: none; }
@@ -125,13 +141,6 @@
 </header>
 
 <div class="shell">
-  <nav class="progress" id="progress" hidden>
-    <div data-s="1">1 · צילום</div>
-    <div data-s="2">2 · סימון</div>
-    <div data-s="3">3 · ארובה</div>
-    <div data-s="4">4 · תוצאה</div>
-  </nav>
-
   <div class="block">
     <!-- login -->
     <section class="step" data-step="login">
@@ -164,12 +173,34 @@
         <button type="button" data-mode="replace">יש ארובה ישנה – להחליף</button>
       </div>
       <p class="hint" id="markHint">צבע באצבע את המקום על הגג שבו תעמוד הארובה.</p>
-      <div class="fitbox"><div class="stage" id="stage"><canvas id="view"></canvas></div></div>
-      <div class="row tools">
-        <label>מברשת <input type="range" id="brush" min="1" max="12" step="0.5" value="4"></label>
-        <button class="btn" type="button" id="eraser">מחק</button>
-        <button class="btn" type="button" id="undo">↶</button>
-        <button class="btn" type="button" id="clear">נקה</button>
+      <div class="fitbox"><div class="stage" id="stage"><canvas id="view"></canvas><div class="cursor" id="cursor"></div></div></div>
+      <div class="toolbar">
+        <div class="group">
+          <button class="tool on" type="button" id="toolBrush" aria-pressed="true">
+            <svg viewBox="0 0 24 24"><path d="M18.4 2.6a2 2 0 0 1 2.9 2.8l-8.6 9.4-3.4-3.4z"/><path d="M8.2 12.4l3.4 3.4c-.3 3-2.6 5.2-6.6 5.2-1.2 0-2.3-.3-3-.8 1.6-.6 2-1.8 2.2-3.2.3-2.6 1.6-4.4 4-4.6z"/></svg>
+            <span>מברשת</span>
+          </button>
+          <button class="tool" type="button" id="toolEraser" aria-pressed="false">
+            <svg viewBox="0 0 24 24"><path d="M15.1 3.3a2 2 0 0 1 2.8 0l4.8 4.8a2 2 0 0 1 0 2.8L12.4 21H20v2H8.6l-6.3-6.3a2 2 0 0 1 0-2.8zM9 9.4l-5.3 5.3 5.9 5.9h1.9l3.4-3.4z"/></svg>
+            <span>מחק</span>
+          </button>
+        </div>
+        <div class="group sizes" id="sizes" aria-label="עובי">
+          <button class="size" type="button" data-size="2.5"><i style="--d:6px"></i></button>
+          <button class="size on" type="button" data-size="4.5"><i style="--d:11px"></i></button>
+          <button class="size" type="button" data-size="7"><i style="--d:16px"></i></button>
+          <button class="size" type="button" data-size="11"><i style="--d:22px"></i></button>
+        </div>
+        <div class="group">
+          <button class="tool" type="button" id="undo">
+            <svg viewBox="0 0 24 24"><path d="M12.5 8c-2.7 0-5.1 1-7 2.6L2 7v9h9l-3.6-3.6c1.4-1.2 3.2-1.9 5.1-1.9 3.5 0 6.5 2.3 7.6 5.5l2.4-.8C21 11 17.1 8 12.5 8z"/></svg>
+            <span>ביטול</span>
+          </button>
+          <button class="tool" type="button" id="clear">
+            <svg viewBox="0 0 24 24"><path d="M9 3h6l1 2h4v2H4V5h4zM6 9h12l-1 12H7zm4 2v8h1.5v-8zm2.5 0v8H14v-8z"/></svg>
+            <span>נקה</span>
+          </button>
+        </div>
       </div>
       <div class="actions">
         <button class="btn" type="button" data-go="1">→ תמונה אחרת</button>
@@ -215,10 +246,8 @@
     <!-- 5. result -->
     <section class="step" data-step="5">
       <div class="fitbox" id="resultBox"></div>
-      <label class="switch"><input type="checkbox" id="keep" checked> מיזוג חכם – שאר התמונה נשאר מקורי</label>
       <div class="actions">
         <button class="btn" type="button" id="restart">🔄 חדש</button>
-        <button class="btn" type="button" id="share" hidden>📤 שליחה</button>
         <button class="btn primary" type="button" id="download">⬇️ הורדה</button>
       </div>
     </section>
