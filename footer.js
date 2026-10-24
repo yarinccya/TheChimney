@@ -2,7 +2,7 @@
 // Business details live here, so they only need changing in one place.
 (() => {
   const BIZ = {
-    phone: "(555) 555-0123", tel: "+15555550123", email: "info@thechemineys.com",
+    phone: "(555) 555-0123", tel: "+15555550123", email: "info@chimneystar.com",
     area: "Your city and all surrounding suburbs",
     hours: [["Mon – Fri", "7:00 am – 8:00 pm"], ["Sat", "8:00 am – 6:00 pm"], ["Sun", "By appointment"]]
   };
@@ -20,7 +20,7 @@
   el.innerHTML = `
     <div class="sf-grid">
       <section>
-        <a class="sf-brand" href="index.html"><i>&#9733;</i>THECHEMINEYS</a>
+        <a class="sf-brand" href="index.html"><i>&#9733;</i>Chimneystar</a>
         <h3>Serving area</h3>
         <p class="sf-area">${BIZ.area}</p>
       </section>
@@ -39,5 +39,5 @@
         <ul>${LINKS.map(([t, href]) => `<li><a href="${href}">${t}</a></li>`).join("")}</ul>
       </nav>
     </div>
-    <div class="sf-bottom">&copy; ${new Date().getFullYear()} THECHEMINEYS<span>&#9733;</span>Licensed &amp; Insured<span>&#9733;</span>Family Owned</div>`;
+    <div class="sf-bottom">&copy; ${new Date().getFullYear()} Chimneystar<span>&#9733;</span>Licensed &amp; Insured<span>&#9733;</span>Family Owned</div>`;
 })();

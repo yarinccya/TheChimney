@@ -1,0 +1,190 @@
+/* Home page sections below the footage: before/after, Google reviews, product quality. Uses the page's tokens. */
+/* One screen at a time (home.js pages between them with an animated scroll; the page can't be scrolled freely).
+   Every screen is exactly the window height under the fixed top bar; home.js sets --app-h / --bar-h to the measured sizes
+   and scales a section's content down if it would not fit. The last screen is the closing call-to-action plus the footer. */
+html { --app-h: 100vh; --bar-h: 3.15rem; overflow: hidden; overscroll-behavior: none; }
+.hero { height: var(--app-h); min-height: 0; }
+.sec { height: calc(var(--app-h) - var(--bar-h)); overflow: hidden; display: flex; flex-direction: column; justify-content: center;
+  padding: clamp(1.5rem, 5vh, 4rem) clamp(1.25rem, 4vw, 3.5rem); }
+.sec-in { width: 100%; max-width: 76rem; margin: 0 auto; transform-origin: 50% 50%; }
+
+/* closing screen: shares the window with the footer, in the footer's blue */
+.sec-cta { position: relative; background: #120a06; text-align: center; padding-top: 1rem; padding-bottom: 1rem; }
+.sec-cta .sec-in { position: relative; z-index: 2; }
+/* the fireplace still from the install clip, dimmed and flickering, with sparks (home.js) rising over it */
+.cta-fire { position: absolute; inset: 0; z-index: 0; background: url("frames/s1/f_045.webp") center 88% / cover no-repeat;
+  filter: brightness(.6) saturate(1.15); animation: cta-flicker 2.6s steps(1, end) infinite; }
+.cta-fire::after { content: ""; position: absolute; inset: 0;
+  background: linear-gradient(to bottom, rgba(11,37,69,.92) 0%, rgba(11,37,69,.6) 38%, rgba(20,8,4,.25) 70%, rgba(11,37,69,.7) 100%); }
+@keyframes cta-flicker { 0% { filter: brightness(.6) saturate(1.15); } 18% { filter: brightness(.68) saturate(1.2); } 31% { filter: brightness(.56) saturate(1.1); }
+  52% { filter: brightness(.66) saturate(1.2); } 67% { filter: brightness(.58) saturate(1.1); } 84% { filter: brightness(.7) saturate(1.25); } }
+.cta-embers { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; pointer-events: none; mix-blend-mode: screen; }
+@media (prefers-reduced-motion: reduce) { .cta-fire { animation: none; } .cta-embers { display: none; } }
+.sec-cta h2 { font-family: var(--font-display); font-weight: 800; font-size: clamp(2.2rem, 5.5vw, 4.4rem); line-height: .95; text-transform: uppercase;
+  text-shadow: 0 2px 4px rgba(0,0,0,.5), 0 0 40px rgba(255,120,30,.35); }
+.sec-cta p { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
+.sec-cta p { margin-top: .8rem; font-size: 1.1rem; opacity: .85; }
+.cta-actions { margin-top: 1.5rem; display: flex; flex-wrap: wrap; justify-content: center; gap: .8rem; }
+
+/* fallback for windows too short to page (home.js decides): ordinary scrolling, sections at their natural height */
+html.free-scroll { overflow: auto; }
+html.free-scroll .sec { height: auto; overflow: visible; }
+html.free-scroll .sec-cta { padding-top: 3rem; padding-bottom: 3rem; }
+html.free-scroll .pager-dots { display: none; }
+
+/* position dots on the right; click to jump */
+.pager-dots { position: fixed; right: clamp(.6rem, 1.6vw, 1.4rem); top: 50%; transform: translateY(-50%); z-index: 5; display: flex; flex-direction: column; gap: .7rem; }
+.pager-dots button { all: unset; cursor: pointer; width: .7rem; height: .7rem; border-radius: 999px; background: rgba(247,241,227,.55);
+  box-shadow: 0 0 0 2px rgba(7,23,44,.55); transition: height .3s cubic-bezier(.2,.8,.2,1), background .3s; }
+.pager-dots button:hover { background: var(--cream); }
+.pager-dots button[aria-current="true"] { height: 1.8rem; background: var(--red); }
+.pager-dots button:focus-visible { outline: 2px solid var(--cream); outline-offset: 3px; }
+.sec-head { text-align: center; max-width: 44rem; margin: 0 auto clamp(1.4rem, 3.5vh, 2.6rem); }
+.sec-head h2 { font-family: var(--font-display); font-weight: 800; font-size: clamp(2.3rem, 5vw, 3.8rem); line-height: .95; text-transform: uppercase; letter-spacing: .01em; }
+.sec-head p { margin-top: .9rem; font-size: 1.1rem; line-height: 1.5; opacity: .85; }
+.kicker { display: inline-flex; align-items: center; gap: .5rem; margin-bottom: .9rem; font-family: var(--font-display); font-weight: 800; font-size: 1rem; letter-spacing: .12em; text-transform: uppercase; color: var(--red); }
+.kicker::before, .kicker::after { content: "\2605"; font-size: .75em; }
+.sample-tag { display: inline-block; font-family: var(--font-display); font-weight: 800; font-size: .75rem; letter-spacing: .1em; text-transform: uppercase;
+  padding: .15rem .5rem; border-radius: 2px; background: #f2b705; color: #1a1300; }
+
+/* scroll-in */
+.reveal { opacity: 0; transform: translateY(1.5rem); transition: opacity .7s ease, transform .7s cubic-bezier(.2,.8,.2,1); }
+.reveal.seen { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; transition: none; } }
+
+/* ---------- before / after ---------- */
+.sec-ba { background: var(--navy-deep); }
+.ba { display: grid; grid-template-columns: minmax(0, 2.1fr) minmax(0, 1fr); gap: 1.4rem; align-items: start; }
+.ba-stage { position: relative; aspect-ratio: 4 / 3; max-height: calc(var(--app-h) - var(--bar-h) - 15rem); overflow: hidden; border-radius: 4px; background: var(--navy); cursor: ew-resize;
+  user-select: none; -webkit-user-select: none; touch-action: pan-y; border-bottom: 6px solid var(--red); box-shadow: 0 24px 60px rgba(0,0,0,.45); }
+.ba-stage img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; -webkit-user-drag: none; }
+.ba-before { clip-path: inset(0 50% 0 0); }
+.ba-tag { position: absolute; top: 1rem; font-family: var(--font-display); font-weight: 800; font-size: 1.05rem; letter-spacing: .1em; text-transform: uppercase;
+  padding: .3rem .75rem; border-radius: 2px; pointer-events: none; transition: opacity .2s; }
+.ba-tag-b { left: 1rem; background: var(--navy-deep); color: var(--cream); }
+.ba-tag-a { right: 1rem; background: var(--red); color: var(--cream); }
+.ba-stage .sample-tag { position: absolute; left: 1rem; bottom: 1rem; pointer-events: none; }
+.ba-handle { position: absolute; top: 0; bottom: 0; left: 50%; width: 4px; margin-left: -2px; background: var(--cream); box-shadow: 0 0 12px rgba(0,0,0,.55); cursor: ew-resize; }
+.ba-handle span { position: absolute; top: 50%; left: 50%; width: 3.4rem; height: 3.4rem; transform: translate(-50%, -50%); border-radius: 50%;
+  background: var(--red); border: 3px solid var(--cream); box-shadow: 0 6px 18px rgba(0,0,0,.45); display: grid; place-items: center; transition: transform .15s; }
+.ba-handle span::before { content: "\25C0\00a0\25B6"; color: var(--cream); font-size: .8rem; letter-spacing: -.05em; }
+.ba-stage:hover .ba-handle span, .ba-handle:focus-visible span { transform: translate(-50%, -50%) scale(1.08); }
+.ba-handle:focus-visible { outline: 3px solid var(--red); outline-offset: 2px; }
+
+.ba-side h3 { font-family: var(--font-display); font-weight: 800; font-size: 1.1rem; letter-spacing: .1em; text-transform: uppercase; opacity: .7; margin-bottom: .8rem; }
+.ba-jobs { display: grid; gap: .45rem; }
+.ba-jobs button { all: unset; box-sizing: border-box; cursor: pointer; display: grid; grid-template-columns: 4.6rem 1fr; gap: .8rem; align-items: center;
+  padding: .4rem; border-radius: 4px; background: rgba(247,241,227,.05); border-left: 4px solid transparent; transition: background .2s, border-color .2s, transform .15s; }
+.ba-jobs button:hover { background: rgba(247,241,227,.1); transform: translateX(3px); }
+.ba-jobs button[aria-selected="true"] { background: rgba(200,16,46,.16); border-left-color: var(--red); }
+.ba-jobs button:focus-visible { outline: 3px solid var(--cream); outline-offset: 2px; }
+.ba-jobs img { width: 4.6rem; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 3px; display: block; }
+.ba-jobs b { display: block; font-family: var(--font-display); font-weight: 800; font-size: 1.2rem; line-height: 1.05; text-transform: uppercase; letter-spacing: .02em; color: var(--cream); }
+.ba-jobs small { display: block; margin-top: .25rem; font-size: .85rem; color: rgba(247,241,227,.65); }
+.ba-side .btn { margin-top: .9rem; width: 100%; justify-content: center; }
+
+/* ---------- Google reviews ---------- */
+.sec-reviews { background: var(--cream); color: var(--navy-deep); }
+.g-badge { display: inline-flex; align-items: center; gap: .55rem; padding: .4rem .9rem; margin-bottom: 1rem; border-radius: 999px; background: #fff;
+  box-shadow: 0 2px 10px rgba(11,37,69,.12); font-weight: 600; font-size: .95rem; color: #3c4043; }
+.g-badge svg { width: 1.2rem; height: 1.2rem; }
+.rv-summary { display: inline-flex; align-items: center; gap: .6rem; margin-top: 1rem; font-weight: 600; }
+.rv-summary .rv-avg { font-family: var(--font-display); font-weight: 800; font-size: 2rem; line-height: 1; }
+.stars { color: #f4b400; letter-spacing: .08em; font-size: 1.1rem; }
+.rv-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(15.5rem, 1fr)); gap: 1.1rem; }
+.rv-card { position: relative; display: flex; flex-direction: column; gap: .8rem; padding: 1.4rem 1.3rem 1.2rem; background: #fff; border-radius: 6px;
+  border-top: 5px solid var(--navy); box-shadow: 0 10px 30px rgba(11,37,69,.1); transition: transform .2s, box-shadow .2s; }
+.rv-card:hover { transform: translateY(-4px); box-shadow: 0 16px 36px rgba(11,37,69,.16); }
+.rv-card::after { content: "\201D"; position: absolute; top: .2rem; right: 1rem; font-family: Georgia, serif; font-size: 4.5rem; line-height: 1; color: rgba(11,37,69,.08); }
+.rv-card p { font-size: 1rem; line-height: 1.55; color: #2b3440; flex: 1; }
+.rv-who { display: flex; align-items: center; gap: .7rem; padding-top: .8rem; border-top: 1px solid rgba(11,37,69,.1); }
+.rv-avatar { width: 2.4rem; height: 2.4rem; border-radius: 50%; display: grid; place-items: center; flex: none; color: #fff; font-weight: 700; font-size: 1.05rem; }
+.rv-who b { display: block; font-size: .98rem; color: var(--navy-deep); }
+.rv-who small { display: block; font-size: .82rem; color: #6b7480; }
+.rv-who svg { width: 1.2rem; height: 1.2rem; margin-left: auto; flex: none; }
+.rv-card .sample-tag { align-self: flex-start; }
+.rv-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: .8rem; margin-top: 2rem; }
+.rv-actions a.btn.outline { background: transparent; color: var(--navy-deep); border: 2px solid var(--navy-deep); border-bottom-width: 5px; }
+.rv-actions a.btn.outline:hover { background: rgba(11,37,69,.08); }
+
+/* ---------- product quality ---------- */
+.sec-quality { background: var(--navy-deep); position: relative; overflow: hidden; }
+.sec-quality::before { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .5;
+  background: radial-gradient(ellipse 60% 50% at 50% 0%, rgba(42,93,176,.35), transparent 70%); }
+.sec-quality .sec-in { position: relative; }
+.q-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.1rem; }
+.q-card { padding: 1.6rem 1.3rem 1.5rem; border-radius: 4px; background: linear-gradient(180deg, rgba(247,241,227,.07), rgba(247,241,227,.02));
+  border: 1px solid rgba(247,241,227,.1); border-bottom: 4px solid var(--red); transition: transform .2s, background .2s; }
+.q-card:hover { transform: translateY(-4px); background: linear-gradient(180deg, rgba(247,241,227,.11), rgba(247,241,227,.03)); }
+.q-ico { width: 3.2rem; height: 3.2rem; border-radius: 50%; display: grid; place-items: center; background: var(--red); margin-bottom: 1rem; box-shadow: 0 6px 16px rgba(200,16,46,.35); }
+.q-ico svg { width: 1.6rem; height: 1.6rem; stroke: var(--cream); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.q-card h3 { font-family: var(--font-display); font-weight: 800; font-size: 1.45rem; line-height: 1; text-transform: uppercase; letter-spacing: .02em; }
+.q-card p { margin-top: .6rem; font-size: .98rem; line-height: 1.55; color: rgba(247,241,227,.8); }
+
+.brands-h { margin: clamp(1.8rem, 5vh, 3.5rem) 0 1.2rem; text-align: center; font-family: var(--font-display); font-weight: 800; font-size: clamp(1.5rem, 3vw, 2.2rem); text-transform: uppercase; letter-spacing: .02em; }
+/* running brand strip: the track holds the list twice and slides left by half its width, so it loops seamlessly */
+.brands { position: relative; overflow: hidden; background: var(--cream); border-radius: 4px; padding: 1.5rem 0; border-bottom: 4px solid var(--red); }
+/* names fade out at both ends, into the strip's own colour */
+.brands::before, .brands::after { content: ""; position: absolute; top: 0; bottom: 0; width: 12%; z-index: 1; pointer-events: none; }
+.brands::before { left: 0; background: linear-gradient(90deg, var(--cream), rgba(247,241,227,0)); }
+.brands::after { right: 0; background: linear-gradient(-90deg, var(--cream), rgba(247,241,227,0)); }
+.brands-track { list-style: none; margin: 0; padding: 0; display: flex; align-items: center; width: max-content;
+  animation: brands-run var(--brands-time, 30s) linear infinite; }
+.brands:hover .brands-track { animation-play-state: paused; }
+.brands-track li { flex: none; display: flex; align-items: center; color: var(--navy); font-family: var(--font-display); font-weight: 800;
+  font-size: clamp(1.4rem, 2.4vw, 1.9rem); letter-spacing: .06em; text-transform: uppercase; line-height: 1; white-space: nowrap; transition: color .2s, transform .2s; }
+.brands-track li::after { content: "\2605"; margin: 0 clamp(1.8rem, 4vw, 3.5rem); font-size: .6em; color: var(--red); }
+.brands-track li:hover { color: var(--red); }
+.brands-track li img { height: 3rem; width: auto; display: block; }
+@keyframes brands-run { to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) {
+  .brands { padding: 1.4rem 1rem; }
+  .brands::before, .brands::after { display: none; }
+  .brands-track { animation: none; width: auto; flex-wrap: wrap; justify-content: center; row-gap: 1rem; }
+  .brands-track [aria-hidden="true"] { display: none; }
+}
+
+@media (max-width: 980px) {
+  .q-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 860px) {
+  .ba { grid-template-columns: minmax(0, 1fr); }   /* minmax(0, …) so the scrolling job row can't widen the page */
+  .ba-side h3 { display: none; }
+  .ba-jobs { grid-auto-flow: column; grid-auto-columns: 8.5rem; overflow-x: auto; padding-bottom: .4rem; scroll-snap-type: x mandatory; }
+  .ba-jobs button { grid-template-columns: 1fr; gap: .45rem; border-left: 0; border-bottom: 4px solid transparent; scroll-snap-align: start; }
+  .ba-jobs button[aria-selected="true"] { border-bottom-color: var(--red); }
+  .ba-jobs button:hover { transform: none; }
+  .ba-jobs img { width: 100%; }
+  .ba-jobs b { font-size: 1rem; }
+  .ba-jobs small { display: none; }
+}
+@media (max-width: 720px) {
+  .ba-tag { font-size: .85rem; top: .6rem; padding: .2rem .55rem; }
+  .ba-tag-b { left: .6rem; } .ba-tag-a { right: .6rem; }
+  .ba-handle span { width: 2.8rem; height: 2.8rem; }
+  .brands { padding: 1.1rem 0; }
+
+  /* phones: so each section fits one screen, reviews and quality cards become a row you swipe sideways */
+  .sec { padding: 1.6rem 1.25rem 1.8rem; }
+  .sec-cta p { display: none; }   /* the footer takes most of a phone's last screen */
+  .cta-actions { margin-top: 1rem; }
+  .pager-dots { right: .35rem; gap: .5rem; }
+  .pager-dots button { width: .45rem; height: .45rem; }
+  .pager-dots button[aria-current="true"] { height: 1.2rem; }
+  .sec-head { margin-bottom: 1.2rem; }
+  .sec-head h2 { font-size: 2.2rem; }
+  .sec-head p { margin-top: .6rem; font-size: 1rem; }
+  .kicker, .g-badge { margin-bottom: .6rem; }
+  .rv-grid, .q-grid { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 84%; gap: .8rem;
+    overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scrollbar-width: none;
+    margin: 0 -1.25rem; padding: .4rem 1.25rem 1rem; scroll-padding-inline: 1.25rem; }
+  .rv-grid::-webkit-scrollbar, .q-grid::-webkit-scrollbar { display: none; }
+  .rv-card, .q-card { scroll-snap-align: start; }
+  .rv-card:hover, .q-card:hover { transform: none; }
+  .rv-actions { margin-top: 1rem; }
+  .q-card { display: grid; grid-template-columns: auto 1fr; column-gap: .9rem; align-content: start; padding: 1.2rem; }
+  .q-ico { grid-row: span 2; margin-bottom: 0; width: 2.8rem; height: 2.8rem; }
+  .q-card h3 { font-size: 1.3rem; }
+  .q-card p { margin-top: .35rem; font-size: .95rem; }
+  .brands-h { margin: 1.4rem 0 .9rem; font-size: 1.35rem; }
+}

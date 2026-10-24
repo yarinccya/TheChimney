@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>THECHEMINEYS | Chimney replacement, cleaning and new installations</title>
-<meta name="description" content="THECHEMINEYS replaces, cleans and installs chimneys for homes.">
+<title>Chimneystar | Chimney replacement, cleaning and new installations</title>
+<meta name="description" content="Chimneystar replaces, cleans and installs chimneys for homes.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
@@ -42,7 +42,7 @@
   .topbar .perks span { color: var(--red); margin: 0 .5em; }
   .topbar a { color: var(--cream); text-decoration: none; font-weight: 600; }
 
-  header { position: absolute; top: calc(3.15rem + env(safe-area-inset-top)); left: 0; right: 0; display: flex; justify-content: space-between; align-items: center;
+  header { position: absolute; top: calc(2.7rem + env(safe-area-inset-top)); left: 0; right: 0; display: flex; justify-content: space-between; align-items: center;
     padding: 1.1rem clamp(1.25rem, 4vw, 3.5rem) 0; z-index: 3; }
   .brand { font-family: var(--font-display); font-weight: 800; font-size: clamp(1.5rem, 2.8vw, 2.2rem); line-height: 1;
     text-transform: uppercase; letter-spacing: .02em; color: var(--cream); text-decoration: none; text-shadow: 0 2px 10px rgba(0,0,0,.5); }
@@ -58,10 +58,29 @@
     transition: transform .18s cubic-bezier(.2,.8,.2,1), background .2s, color .2s, box-shadow .2s, border-color .2s; }
   .steps button::before { content: ""; position: absolute; inset: 0; background: var(--red); transform: translateY(101%); transition: transform .22s cubic-bezier(.2,.8,.2,1); z-index: 0; }
   .steps button > * { position: relative; z-index: 1; }
-  .steps .ico { display: inline-block; width: 0; opacity: 0; overflow: hidden; font-size: .9em; transform: scale(.4) rotate(-90deg); transition: width .22s, opacity .22s, transform .3s; }
+  /* services: a label over the buttons, and a play icon on each so it's clear they open a video */
+  .svc { display: flex; flex-direction: column; align-items: flex-end; gap: .45rem; }
+  .svc-label { display: inline-flex; align-items: center; gap: .45rem; font-family: var(--font-display); font-weight: 800; font-size: .95rem; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--cream); text-shadow: 0 1px 6px rgba(0,0,0,.7); }
+  .svc-label::before { content: ""; width: 1.6rem; height: 2px; background: var(--red); }
+  .svc-label::after { content: "\25BC"; font-size: .65em; color: var(--red); animation: svc-nudge 1.6s ease-in-out infinite; }
+  @keyframes svc-nudge { 0%, 100% { transform: translateY(-1px); } 50% { transform: translateY(3px); } }
+  .steps .ico { position: relative; flex: none; width: 1.35em; height: 1.35em; border-radius: 50%; background: var(--red); transition: background .2s, transform .25s; }
+  .steps .ico::before { content: ""; position: absolute; top: 50%; left: 54%; transform: translate(-50%, -50%);
+    border-style: solid; border-width: .3em 0 .3em .48em; border-color: transparent transparent transparent var(--cream); transition: border-color .2s; }
+  /* until a service has been opened, each play icon sends out a ring, one after the other */
+  .steps .ico::after { content: ""; position: absolute; inset: 0; border-radius: 50%; border: 2px solid var(--red); opacity: 0; }
+  .steps:not(.used) .ico::after { animation: svc-ring 2.4s ease-out infinite; }
+  .steps:not(.used) li:nth-child(2) .ico::after { animation-delay: .8s; }
+  .steps:not(.used) li:nth-child(3) .ico::after { animation-delay: 1.6s; }
+  @keyframes svc-ring { 0% { transform: scale(1); opacity: .9; } 70%, 100% { transform: scale(2.1); opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .svc-label::after, .steps .ico::after { animation: none !important; } }
   .steps button:hover:not(:disabled), .steps button:focus-visible { transform: translateY(-4px); color: var(--cream); border-bottom-color: var(--red-dark); box-shadow: 0 12px 24px rgba(0,0,0,.45); }
   .steps button:hover:not(:disabled)::before, .steps button:focus-visible::before { transform: translateY(0); }
-  .steps button:hover:not(:disabled) .ico, .steps button:focus-visible .ico { width: 1em; opacity: 1; transform: scale(1) rotate(0); }
+  .steps button:hover:not(:disabled) .ico, .steps button:focus-visible .ico, .steps li.on .ico { background: var(--cream); transform: scale(1.1); }
+  .steps button:hover:not(:disabled) .ico::before, .steps button:focus-visible .ico::before, .steps li.on .ico::before { border-left-color: var(--red); }
+  .steps li.done .ico { background: var(--cream); }
+  .steps li.done .ico::before { border-left-color: var(--navy); }
   .steps button:active:not(:disabled) { transform: translateY(0); box-shadow: 0 3px 8px rgba(0,0,0,.4); }
   .steps button:disabled { opacity: .55; cursor: progress; }
   .steps button:hover:not(:disabled), .steps button:active:not(:disabled) { background: var(--cream); border-bottom-width: 5px; }
@@ -71,7 +90,6 @@
   .steps li.done button { background: var(--navy); color: var(--cream); border-bottom-color: var(--cream); }
   .steps li.on button { background: var(--red); color: var(--cream); border-bottom-color: var(--red-dark); }
   .steps li.on button::before { display: none; }
-  .steps li.on .ico { width: 1em; opacity: 1; transform: none; }
 
   .copy { position: absolute; left: clamp(1.25rem, 4vw, 3.5rem); right: clamp(1.25rem, 4vw, 3.5rem);
     top: 50%; transform: translateY(-50%); padding-top: 3rem; z-index: 3; max-width: 64rem; margin: 0 auto; text-align: center; }
@@ -100,16 +118,19 @@
     .topbar .perks { display: none; }
     .topbar { justify-content: center; }
     header { flex-direction: column; align-items: center; gap: .7rem; padding-top: .8rem; }
+    .svc { align-items: center; gap: .35rem; }
+    .svc-label { font-size: .8rem; }
     .steps { gap: .35rem; }
-    .steps button { font-size: 1rem; padding: .45rem .7rem .4rem; }
+    .steps button { font-size: 1rem; padding: .45rem .7rem .4rem; gap: .4rem; }
     .actions button, .actions a.btn { flex: 1 1 100%; justify-content: center; }
   }
 </style>
+<link rel="stylesheet" href="home.css">
 </head>
 <body>
   <div class="topbar">
     <div class="perks">Free Estimates<span>&#9733;</span>Licensed &amp; Insured<span>&#9733;</span>Family Owned</div>
-    <nav aria-label="Main"><a href="index.html" aria-current="page">Home</a><a href="gallery.html">Gallery</a><a href="lead.html">Contact us</a><a class="tb-call" href="tel:+15555550123"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25c1.12.37 2.33.57 3.6.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z"/></svg><span class="tb-num">(555) 555-0123</span><span class="tb-short">Call</span></a></nav>
+    <nav aria-label="Main"><a href="index.html" aria-current="page">Home</a><a href="gallery.html">Gallery</a><a href="lead.html">Contact Us</a><a class="tb-call" href="tel:+15555550123"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25c1.12.37 2.33.57 3.6.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z"/></svg><span class="tb-num">(555) 555-0123</span><span class="tb-short">Call</span></a></nav>
   </div>
 
   <section class="hero">
@@ -117,12 +138,15 @@
   <div class="scrim"></div>
 
   <header>
-    <a class="brand" href="#" aria-label="THECHEMINEYS home"><i>&#9733;</i>THECHEMINEYS</a>
-    <ol class="steps" aria-label="Choose a service">
-      <li data-k="0"><button type="button" title="Watch: new installations"><span class="ico" aria-hidden="true">&#9733;</span><span>Install</span></button></li>
-      <li data-k="1"><button type="button" title="Watch: chimney cleaning"><span class="ico" aria-hidden="true">&#9733;</span><span>Clean</span></button></li>
-      <li data-k="2"><button type="button" title="Watch: chimney replacement"><span class="ico" aria-hidden="true">&#9733;</span><span>Replace</span></button></li>
-    </ol>
+    <a class="brand" href="#" aria-label="Chimneystar home"><i>&#9733;</i>Chimneystar</a>
+    <div class="svc">
+      <span class="svc-label" id="svc-label">Watch our services</span>
+      <ol class="steps" aria-labelledby="svc-label">
+        <li data-k="0"><button type="button" title="Watch: new installations"><span class="ico" aria-hidden="true"></span><span>Install</span></button></li>
+        <li data-k="1"><button type="button" title="Watch: chimney cleaning"><span class="ico" aria-hidden="true"></span><span>Clean</span></button></li>
+        <li data-k="2"><button type="button" title="Watch: chimney replacement"><span class="ico" aria-hidden="true"></span><span>Replace</span></button></li>
+      </ol>
+    </div>
   </header>
 
   <main class="copy">
@@ -139,8 +163,109 @@
   </main>
   </section>
 
+  <section class="sec sec-ba" id="before-after" aria-labelledby="ba-h">
+    <div class="sec-in">
+      <div class="sec-head reveal">
+        <div class="kicker">Our work</div>
+        <h2 id="ba-h">Before &amp; after</h2>
+        <p>Drag the handle across the photo to see the difference.</p>
+      </div>
+      <div class="ba reveal">
+        <div class="ba-stage" id="ba-stage">
+          <img class="ba-after" id="ba-after" alt="">
+          <img class="ba-before" id="ba-before" alt="">
+          <span class="ba-tag ba-tag-b">Before</span>
+          <span class="ba-tag ba-tag-a">After</span>
+          <span class="sample-tag" id="ba-sample" hidden>Sample</span>
+          <div class="ba-handle" id="ba-handle" role="slider" tabindex="0" aria-label="Before and after divider" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"><span></span></div>
+        </div>
+        <div class="ba-side">
+          <h3>Pick a job</h3>
+          <div class="ba-jobs" id="ba-jobs" role="tablist" aria-label="Jobs"></div>
+          <a class="btn" href="gallery.html">See more of our work</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec sec-reviews" id="reviews" aria-labelledby="rv-h">
+    <div class="sec-in">
+      <div class="sec-head reveal">
+        <div class="g-badge"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.7 13.2l7.9 6.2C12.5 13.6 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 6.9l7.5 5.8c4.4-4 6.8-10 6.8-17.2z"/><path fill="#FBBC05" d="M10.6 28.6c-.5-1.4-.8-3-.8-4.6s.3-3.2.8-4.6l-7.9-6.2C1 16.6 0 20.2 0 24s1 7.4 2.7 10.8l7.9-6.2z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.8 2.3-8.4 2.3-6.2 0-11.5-4.1-13.4-9.9l-7.9 6.2C6.6 42.6 14.6 48 24 48z"/></svg>Google reviews</div>
+        <h2 id="rv-h">What our customers say</h2>
+        <div class="rv-summary" id="rv-summary" hidden></div>
+      </div>
+      <div class="rv-grid" id="rv-grid"></div>
+      <div class="rv-actions">
+        <a class="btn" id="rv-all" target="_blank" rel="noopener" hidden>Read all reviews on Google</a>
+        <a class="btn outline" id="rv-write" target="_blank" rel="noopener" hidden>Leave us a review</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec sec-quality" id="quality" aria-labelledby="q-h">
+    <div class="sec-in">
+      <div class="sec-head reveal">
+        <div class="kicker">Product quality</div>
+        <h2 id="q-h">Built with the best</h2>
+        <p>The parts you can't see are the ones that keep your home safe. We only install materials we'd trust in our own homes.</p>
+      </div>
+      <div class="q-grid reveal">
+        <article class="q-card">
+          <div class="q-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="1"/><path d="M7 8h10M7 13h10M7 18h10"/></svg></div>
+          <h3>Stainless steel liners</h3>
+          <p>Corrosion-resistant flue liners sized to your fireplace or stove, for a clean, steady draft.</p>
+        </article>
+        <article class="q-card">
+          <div class="q-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22c4 0 7-3 7-7 0-4-3-6.5-4.5-10-1.8 1.8-2.5 3.8-2.5 5.5C11 9.3 10 8 9.8 6 6.8 9 5 11.5 5 15c0 4 3 7 7 7z"/></svg></div>
+          <h3>Fire-rated masonry</h3>
+          <p>Refractory mortar and quality brick that stand up to heat, frost and decades of weather.</p>
+        </article>
+        <article class="q-card">
+          <div class="q-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9h18l-2.5-4h-13z"/><path d="M8 9v12h8V9"/><path d="M5 12h14"/></svg></div>
+          <h3>Caps &amp; crowns that seal</h3>
+          <p>Stainless caps and sloped crowns that keep rain, animals and debris out of your flue.</p>
+        </article>
+        <article class="q-card">
+          <div class="q-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg></div>
+          <h3>Built to code</h3>
+          <p>Clearances, flashing and connections done to local building code on every job.</p>
+        </article>
+      </div>
+      <h3 class="brands-h reveal">We offer only the best chimney brands</h3>
+      <!-- Running brand strip (home.js repeats the list so it loops). Brand names as text; to show a manufacturer's logo instead,
+           put the file in logo/brands/ and use <li><img src="logo/brands/name.svg" alt="Name"></li> -->
+      <div class="brands reveal" role="region" aria-label="Brands we install">
+        <ul class="brands-track">
+          <li>Superior</li>
+          <li>Heat &amp; Glo</li>
+          <li>Real Fyre</li>
+          <li>Napoleon</li>
+          <li>Majestic</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- closing screen: shares the last screen with the footer -->
+  <section class="sec sec-cta" id="cta" aria-labelledby="cta-h">
+    <div class="cta-fire" aria-hidden="true"></div>
+    <canvas class="cta-embers" id="cta-embers" aria-hidden="true"></canvas>
+    <div class="sec-in">
+      <h2 id="cta-h">Ready for a chimney you can trust?</h2>
+      <p>Free estimates. Licensed &amp; insured crews.</p>
+      <div class="cta-actions">
+        <a class="btn" href="lead.html">Get a free estimate</a>
+        <a class="btn ghost" href="tel:+15555550123">Call (555) 555-0123</a>
+      </div>
+    </div>
+  </section>
+
   <footer id="site-footer"></footer>
   <script src="footer.js"></script>
+  <script src="before-after/jobs.js"></script>
+  <script src="reviews/reviews.js"></script>
+  <script src="home.js"></script>
 
 <script>
 (() => {
@@ -337,6 +462,7 @@
     const id = ++run, seq = SEQS[k], from = snapshot();
     actions.classList.add("hide"); textEl.classList.add("out");
     markSteps(k);
+    stepLis[0].parentElement.classList.add("used");   // the visitor found the services: stop the attention rings
     // TEXT_DELAY ms after the click the clip's text and buttons come in over the footage while it keeps playing.
     setTimeout(() => {
       if (id !== run) return;
