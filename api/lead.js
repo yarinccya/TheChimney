@@ -5,6 +5,17 @@ const { query, ensureSchema, NoDatabase } = require("./_db");
 const str = (v, max) => (typeof v === "string" ? v.trim().slice(0, max) : "");
 
 module.exports = async function handler(req, res) {
+  // GET = health check: confirms the database is reachable, saves nothing.
+  if (req.method === "GET") {
+    try {
+      await ensureSchema();
+      await query("SELECT 1");
+      return res.json({ ok: true });
+    } catch (e) {
+      console.error(e);
+      return res.status(500).json({ ok: false, reason: e instanceof NoDatabase ? "no-database-url" : "database-error" });
+    }
+  }
   if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
   const b = req.body || {};
   if (str(b.website, 200)) return res.json({ ok: true }); // honeypot field: bots fill it, people don't see it
