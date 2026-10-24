@@ -64,7 +64,7 @@
 
     // The first time the slider scrolls into view, nudge the handle so people see it moves.
     const hint = () => {
-      if (touched || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      if (touched) return;
       const keys = [[0, 50], [450, 72], [1050, 28], [1500, 50]], t0 = performance.now();
       const step = now => {
         if (touched) return;
@@ -137,7 +137,7 @@
   const root = document.documentElement, bar = document.querySelector(".topbar"), footer = $("site-footer"), cta = $("cta");
   const screens = [document.querySelector(".hero"), ...document.querySelectorAll(".sec:not([hidden])")];
   const NAMES_SCREENS = ["Top", "Before & after", "Reviews", "Product quality", "Contact"];
-  const DUR = matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 850;
+  const DUR = 850;   // same motion on every device, also when the phone asks for reduced motion (the owner wants the slide)
   let cur = 0, busy = false, lastWheel = 0, lastDelta = 0, paging = true;
 
   // whole pixels, rounded down, so the screen above can never show through under the bar
@@ -151,12 +151,12 @@
     cta.style.height = Math.max(0, innerHeight - barH() - footerH) + "px";
     // shrink a section's content to fit when the window is too short for it
     let smallest = 1;
-    document.querySelectorAll(".sec:not(.sec-cta)").forEach(sec => {
+    document.querySelectorAll(".sec").forEach(sec => {
       const inner = sec.querySelector(".sec-in"), cs = getComputedStyle(sec);
       inner.style.transform = "";
       const room = sec.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
       const s = Math.min(1, room / inner.offsetHeight);
-      smallest = Math.min(smallest, s);
+      if (sec !== cta) smallest = Math.min(smallest, s);   // the closing screen only ever shrinks, it never forces the fallback
       inner.style.transform = s < 1 ? `scale(${s.toFixed(3)})` : "";
     });
     // On very short windows (a phone held sideways) the screens would have to shrink too far to read, or the footer
@@ -249,7 +249,7 @@
   /* ---------- sparks over the closing screen's fire ---------- */
   // Glowing specks drift up from the bottom, swaying and fading. Runs only while the closing screen is on view.
   const ec = $("cta-embers");
-  if (ec && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  if (ec) {
     const g = ec.getContext("2d");
     const sprite = document.createElement("canvas");   // one soft glowing dot, drawn once and stamped for every spark
     sprite.width = sprite.height = 64;

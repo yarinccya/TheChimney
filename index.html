@@ -63,7 +63,7 @@
   .svc-label { display: inline-flex; align-items: center; gap: .45rem; font-family: var(--font-display); font-weight: 800; font-size: .95rem; letter-spacing: .14em;
     text-transform: uppercase; color: var(--cream); text-shadow: 0 1px 6px rgba(0,0,0,.7); }
   .svc-label::before { content: ""; width: 1.6rem; height: 2px; background: var(--red); }
-  .svc-label::after { content: "\25BC"; font-size: .65em; color: var(--red); animation: svc-nudge 1.6s ease-in-out infinite; }
+  .svc-label::after { content: ""; border-style: solid; border-width: .38em .3em 0; border-color: var(--red) transparent transparent; animation: svc-nudge 1.6s ease-in-out infinite; }
   @keyframes svc-nudge { 0%, 100% { transform: translateY(-1px); } 50% { transform: translateY(3px); } }
   .steps .ico { position: relative; flex: none; width: 1.35em; height: 1.35em; border-radius: 50%; background: var(--red); transition: background .2s, transform .25s; }
   .steps .ico::before { content: ""; position: absolute; top: 50%; left: 54%; transform: translate(-50%, -50%);
@@ -74,7 +74,6 @@
   .steps:not(.used) li:nth-child(2) .ico::after { animation-delay: .8s; }
   .steps:not(.used) li:nth-child(3) .ico::after { animation-delay: 1.6s; }
   @keyframes svc-ring { 0% { transform: scale(1); opacity: .9; } 70%, 100% { transform: scale(2.1); opacity: 0; } }
-  @media (prefers-reduced-motion: reduce) { .svc-label::after, .steps .ico::after { animation: none !important; } }
   .steps button:hover:not(:disabled), .steps button:focus-visible { transform: translateY(-4px); color: var(--cream); border-bottom-color: var(--red-dark); box-shadow: 0 12px 24px rgba(0,0,0,.45); }
   .steps button:hover:not(:disabled)::before, .steps button:focus-visible::before { transform: translateY(0); }
   .steps button:hover:not(:disabled) .ico, .steps button:focus-visible .ico, .steps li.on .ico { background: var(--cream); transform: scale(1.1); }
