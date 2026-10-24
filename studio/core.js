@@ -28,10 +28,21 @@ window.Studio = (() => {
   const routes = {}; // route name → { view, render(...params) }
   const route = (name, view, render) => { routes[name] = { view, render }; };
 
-  function show(name) {
+  function show(name, navKey = name) {
     for (const v of document.querySelectorAll(".view")) v.classList.toggle("on", v.dataset.view === name);
-    $("homeBtn").hidden = name === "home" || name === "login";
-    $("logout").hidden = name === "login";
+    for (const a of document.querySelectorAll("[data-nav]")) a.classList.toggle("on", a.dataset.nav === navKey);
+    document.body.classList.toggle("authed", name !== "login");
+    // the visualizer and forms sit in the plain block; the dashboard draws its own cards
+    document.querySelector(".app-main .block").classList.toggle("bare", name === "home");
+    const a = agent();
+    for (const el of document.querySelectorAll("[data-agent-name]")) el.textContent = a.name || "סוכן";
+    for (const el of document.querySelectorAll("[data-initial]")) el.textContent = (a.name || "?").trim().charAt(0);
+  }
+
+  // Menu badges (pending leads, calls due today), shared by the side menu and the phone tabs.
+  function setCounts({ leads, calls }) {
+    for (const el of document.querySelectorAll('[data-count="leads"]')) el.textContent = leads || "";
+    for (const el of document.querySelectorAll('[data-count="calls"]')) el.textContent = calls || "";
   }
 
   function go(hash) {
@@ -42,7 +53,7 @@ window.Studio = (() => {
     if (!password) return show("login");
     const [name = "home", ...params] = location.hash.replace(/^#\/?/, "").split("/").filter(Boolean);
     const r = routes[name] || routes.home;
-    show(r.view);
+    show(r.view, routes[name] ? name : "home");
     try { r.render(...params.map(decodeURIComponent)); } catch (e) { console.error(e); }
   }
   window.addEventListener("hashchange", render);
@@ -69,7 +80,12 @@ window.Studio = (() => {
     }
   });
   $("logout").addEventListener("click", logout);
-  $("homeBtn").addEventListener("click", () => go("#/"));
+  $("topSearch").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const q = $("topQ").value.trim();
+    $("topQ").value = "";
+    go(`#/customers/${encodeURIComponent(q)}`);
+  });
 
   /* ---------- helpers ---------- */
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -131,5 +147,5 @@ window.Studio = (() => {
     applySize(el, [w, h]);
   }
 
-  return { $, store, api, crm, agent, route, go, render, toast, esc, waNumber, fmtDate, ago, localInput, sizeTo };
+  return { $, store, api, crm, agent, route, go, render, toast, esc, waNumber, fmtDate, ago, localInput, sizeTo, setCounts };
 })();

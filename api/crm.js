@@ -23,18 +23,92 @@ const dateOrNull = (v) => {
   return d.toISOString();
 };
 
+// The agent's time zone, so "today" and "this month" match their clock.
+const tzOf = (v) => (typeof v === "string" && /^[A-Za-z_]+(\/[A-Za-z_+-]+){0,2}$/.test(v) ? v : "UTC");
+
 async function log(customerId, text, agent) {
   await query("INSERT INTO activity (customer_id, text, agent) VALUES ($1, $2, $3)", [customerId, text, agent]);
 }
 
+// The first agent to work a website lead takes it, so it counts on their dashboard.
+async function claim(customerId, agent) {
+  if (agent) await query("UPDATE customers SET agent = $1 WHERE id = $2 AND agent = ''", [agent, customerId]);
+}
+
 const actions = {
-  async stats() {
+  // Everything the sales dashboard shows. mine=true limits it to this agent's customers and orders.
+  async dashboard({ mine, tz }, agent) {
+    const z = tzOf(tz);
+    const who = mine && agent ? agent : null; // $2: null = whole team
+    const day = "date_trunc('day', now() AT TIME ZONE $1)";
+    const month = "date_trunc('month', now() AT TIME ZONE $1)";
+    const local = (col) => `(${col} AT TIME ZONE $1)`;
+
+    const [k] = await query(`SELECT
+      (SELECT count(*) FROM customers WHERE status = 'new')::int AS leads_new,
+      (SELECT count(*) FROM customers WHERE status = 'new' AND ${local("created_at")} >= ${day})::int AS leads_today,
+      (SELECT count(*) FROM customers WHERE status = 'follow_up' AND ($2::text IS NULL OR agent = $2)
+         AND ${local("follow_up_at")} < ${day} + interval '1 day')::int AS calls_due,
+      (SELECT count(*) FROM customers WHERE status = 'follow_up' AND ($2::text IS NULL OR agent = $2)
+         AND ${local("follow_up_at")} < ${day})::int AS calls_overdue,
+      (SELECT count(*) FROM orders WHERE status IN ('new','confirmed','scheduled') AND ($2::text IS NULL OR agent = $2))::int AS open_orders,
+      (SELECT coalesce(sum(price), 0) FROM orders WHERE status IN ('new','confirmed','scheduled') AND ($2::text IS NULL OR agent = $2))::float AS open_value,
+      (SELECT coalesce(sum(price), 0) FROM orders WHERE status <> 'cancelled' AND ($2::text IS NULL OR agent = $2)
+         AND ${local("created_at")} >= ${month})::float AS month_revenue,
+      (SELECT count(*) FROM orders WHERE status <> 'cancelled' AND ($2::text IS NULL OR agent = $2)
+         AND ${local("created_at")} >= ${month})::int AS month_orders,
+      (SELECT coalesce(sum(price), 0) FROM orders WHERE status <> 'cancelled' AND ($2::text IS NULL OR agent = $2)
+         AND ${local("created_at")} >= ${month} - interval '1 month'
+         AND ${local("created_at")} < (now() AT TIME ZONE $1) - interval '1 month')::float AS prev_month_to_date,
+      (SELECT count(*) FROM customers WHERE ($2::text IS NULL OR agent = $2) AND ${local("created_at")} >= ${month})::int AS month_customers,
+      (SELECT count(*) FROM customers WHERE ($2::text IS NULL OR agent = $2) AND ${local("created_at")} >= ${month}
+         AND status = 'customer')::int AS month_won`, [z, who]);
+
+    // new leads are a shared pool, so they always count
+    const pipeline = await query(`SELECT status, count(*)::int AS n FROM customers
+      WHERE ($1::text IS NULL OR agent = $1 OR status = 'new') GROUP BY status`, [who]);
+
+    const weeks = await query(`SELECT to_char(w, 'YYYY-MM-DD') AS week,
+        coalesce(sum(o.price), 0)::float AS revenue, count(o.id)::int AS orders
+      FROM generate_series(date_trunc('week', now() AT TIME ZONE $1) - interval '7 weeks', date_trunc('week', now() AT TIME ZONE $1), interval '1 week') w
+      LEFT JOIN orders o ON o.status <> 'cancelled' AND ($2::text IS NULL OR o.agent = $2)
+        AND ${local("o.created_at")} >= w AND ${local("o.created_at")} < w + interval '1 week'
+      GROUP BY w ORDER BY w`, [z, who]);
+
+    const calls = await query(`SELECT id, name, phone, address, service, follow_up_at FROM customers
+      WHERE status = 'follow_up' AND ($2::text IS NULL OR agent = $2) AND ${local("follow_up_at")} < ${day} + interval '1 day'
+      ORDER BY follow_up_at LIMIT 8`, [z, who]);
+
+    const leads = await query(`SELECT id, name, phone, address, service, source, created_at FROM customers
+      WHERE status = 'new' ORDER BY created_at DESC LIMIT 6`);
+
+    const installs = await query(`SELECT o.id, o.customer_id, o.service, o.product, o.price, o.install_date::text AS install_date, o.status, c.name, c.address
+      FROM orders o JOIN customers c ON c.id = o.customer_id
+      WHERE o.status IN ('new','confirmed','scheduled') AND o.install_date IS NOT NULL AND ($2::text IS NULL OR o.agent = $2)
+        AND o.install_date >= (${day})::date AND o.install_date < (${day})::date + 14
+      ORDER BY o.install_date LIMIT 6`, [z, who]);
+
+    return { kpis: k, pipeline, weeks, calls, leads, installs };
+  },
+
+  // Menu badges: pending leads (shared pool) and calls due today.
+  async counts({ mine, tz }, agent) {
     const [r] = await query(`SELECT
       (SELECT count(*) FROM customers WHERE status = 'new')::int AS leads,
-      (SELECT count(*) FROM customers WHERE status = 'follow_up')::int AS callbacks,
-      (SELECT count(*) FROM customers WHERE status = 'follow_up' AND follow_up_at < date_trunc('day', now()) + interval '1 day')::int AS callbacks_due,
-      (SELECT count(*) FROM orders WHERE status IN ('new', 'confirmed', 'scheduled'))::int AS open_orders`);
+      (SELECT count(*) FROM customers WHERE status = 'follow_up' AND ($2::text IS NULL OR agent = $2)
+         AND (follow_up_at AT TIME ZONE $1) < date_trunc('day', now() AT TIME ZONE $1) + interval '1 day')::int AS calls`,
+      [tzOf(tz), mine && agent ? agent : null]);
     return r;
+  },
+
+  async orders({ filter, mine }, agent) {
+    const who = mine && agent ? agent : null;
+    const open = filter !== "all";
+    return query(`SELECT o.id, o.customer_id, o.service, o.product, o.price, o.install_date::text AS install_date, o.status, o.agent, o.created_at,
+        c.name, c.phone, c.address
+      FROM orders o JOIN customers c ON c.id = o.customer_id
+      WHERE ($1::boolean = false OR o.status IN ('new','confirmed','scheduled')) AND ($2::text IS NULL OR o.agent = $2)
+      ORDER BY o.install_date ASC NULLS LAST, o.created_at DESC LIMIT 200`, [open, who]);
   },
 
   async list({ filter, q }) {
@@ -87,7 +161,8 @@ const actions = {
     if (status === "follow_up" && !when) throw new BadRequest("צריך לבחור מתי לחזור ללקוח");
     const rows = await query("UPDATE customers SET status=$1, follow_up_at=$2, updated_at=now() WHERE id=$3 RETURNING id", [status, when, cid]);
     if (!rows.length) throw new BadRequest("הלקוח לא נמצא");
-    const label = { new: "הוחזר ללידים", follow_up: "לחזור ללקוח", customer: "סומן כלקוח", closed: "סומן כלא רלוונטי" }[status];
+    await claim(cid, agent);
+    const label ={ new: "הוחזר ללידים", follow_up: "לחזור ללקוח", customer: "סומן כלקוח", closed: "סומן כלא רלוונטי" }[status];
     const text = str(note, 1000);
     await log(cid, text ? `${label} – ${text}` : label, agent);
     return { ok: true };
@@ -120,6 +195,7 @@ const actions = {
     }
     const [row] = await query(`INSERT INTO orders (customer_id, service, product, notes, status, price, install_date, agent)
       VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`, [cid, o.service, o.product, o.notes, status, price, install, agent]);
+    await claim(cid, agent);
     // An order makes the lead a customer.
     await query("UPDATE customers SET status='customer', follow_up_at=NULL, updated_at=now() WHERE id=$1 AND status IN ('new','follow_up')", [cid]);
     await log(cid, `נפתחה הזמנה #${row.id}`, agent);

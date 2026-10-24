@@ -142,26 +142,6 @@
   .vhead h2 { font-size: 1.2rem; font-weight: 800; }
   .count { font-size: .85rem; color: var(--muted); font-weight: 600; }
 
-  /* home */
-  .hello h2 { font-size: 1.35rem; font-weight: 800; }
-  .search { flex: none; position: relative; }
-  .search input { width: 100%; padding: .7rem 2.4rem .7rem .9rem; border-radius: 12px; border: 1px solid var(--line); background: var(--navy-deep); }
-  .search::before { content: "⌕"; position: absolute; right: .85rem; top: 50%; transform: translateY(-52%); font-size: 1.3rem; color: var(--muted); pointer-events: none; }
-  .tiles { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(3, 1fr); grid-auto-rows: 1fr; gap: .7rem; }
-  .tile { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .5rem; text-align: center;
-    padding: .8rem .5rem; border-radius: 14px; background: var(--navy-deep); border: 1px solid var(--line); color: var(--cream); text-decoration: none;
-    font-weight: 800; font-size: 1rem; line-height: 1.2; transition: transform .12s, border-color .2s, background .2s; }
-  .tile:hover { border-color: rgba(200,16,46,.7); background: #0a1f3b; }
-  .tile:active { transform: scale(.96); }
-  .tile .ti { display: grid; place-items: center; width: 3.2rem; height: 3.2rem; border-radius: 14px; background: rgba(200,16,46,.14); color: #ff5a73; }
-  .tile .ti svg { width: 28px; height: 28px; fill: currentColor; }
-  .tile.hot .ti { background: var(--red); color: #fff; }
-  .tile small { font-weight: 500; font-size: .78rem; color: var(--muted); }
-  .badge { position: absolute; top: .55rem; left: .55rem; min-width: 1.6rem; height: 1.6rem; padding: 0 .4rem; border-radius: 999px; background: var(--red);
-    color: #fff; font-size: .85rem; font-weight: 800; display: grid; place-items: center; }
-  .badge:empty { display: none; }
-  @media (max-width: 560px) { .tiles { grid-template-columns: repeat(2, 1fr); } .tile { font-size: .95rem; } }
-
   /* lists */
   .list { gap: .5rem; }
   .item { display: flex; align-items: center; gap: .7rem; padding: .7rem .8rem; border-radius: 12px; background: var(--navy-deep); border: 1px solid var(--line);
@@ -210,25 +190,180 @@
 
   .toast { position: fixed; left: 50%; bottom: calc(1.2rem + env(safe-area-inset-bottom)); transform: translate(-50%, 150%); z-index: 20;
     padding: .7rem 1.1rem; border-radius: 12px; background: #1f8f5f; color: #fff; font-weight: 700; box-shadow: 0 8px 24px rgba(0,0,0,.4);
-    transition: transform .3s ease; pointer-events: none; }
+    transition: transform .3s ease, opacity .3s; pointer-events: none; opacity: 0; }
   .toast.bad { background: var(--red); }
-  .toast.on { transform: translate(-50%, 0); }
+  .toast.on { transform: translate(-50%, 0); opacity: 1; }
+
+  /* ---------- sales dashboard layout ---------- */
+  :root { --surface: #0a1f3b; --ink-2: rgba(247,241,227,.82); --good: #3fc38a; --bad: #ff7a8c; --warn: #ffc46b;
+    --bar: #3987e5; --bar-now: #5598e7; --bar-past: #2d5a92; --grid: rgba(247,241,227,.09); }
+  body { flex-direction: row; }
+  .app { flex: 1; min-width: 0; display: flex; height: 100dvh; }
+  .side { flex: none; width: 15.5rem; display: flex; flex-direction: column; gap: 1.2rem; padding: 1.1rem .8rem;
+    background: var(--navy-deep); border-inline-end: 1px solid var(--line); }
+  .side-logo img { display: block; width: 100%; max-width: 12rem; height: auto; margin: 0 auto; }
+  .nav { flex: 1; display: flex; flex-direction: column; gap: .2rem; }
+  .nav a { display: flex; align-items: center; gap: .7rem; padding: .62rem .75rem; border-radius: 10px; color: var(--ink-2);
+    text-decoration: none; font-weight: 600; font-size: .95rem; transition: background .15s, color .15s; }
+  .nav a svg { flex: none; width: 20px; height: 20px; fill: currentColor; opacity: .85; }
+  .nav a:hover { background: rgba(247,241,227,.07); color: var(--cream); }
+  .nav a.on { background: rgba(200,16,46,.16); color: #fff; box-shadow: inset -3px 0 0 var(--red); }
+  .nav a.on svg { opacity: 1; color: #ff5a73; }
+  .nav .sep { height: 1px; background: var(--line); margin: .5rem .4rem; }
+  .nb { margin-inline-start: auto; min-width: 1.45rem; height: 1.45rem; padding: 0 .35rem; border-radius: 999px; background: var(--red); color: #fff;
+    font-size: .75rem; font-weight: 800; display: grid; place-items: center; }
+  .nb:empty { display: none; }
+  .me { display: flex; align-items: center; gap: .6rem; padding: .6rem; border-radius: 12px; background: var(--panel); border: 1px solid var(--line); }
+  .avatar { flex: none; display: grid; place-items: center; width: 2.3rem; height: 2.3rem; border-radius: 50%; background: var(--red); color: #fff;
+    font-weight: 800; text-decoration: none; }
+  .me .who { flex: 1; min-width: 0; line-height: 1.2; }
+  .me .who b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .me .who small { color: var(--muted); font-size: .78rem; }
+
+  .app-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  header.top { flex: none; display: flex; align-items: center; gap: .6rem; padding: .7rem 1.2rem; background: var(--navy-deep);
+    border-bottom: 1px solid var(--line); }
+  header.top .search { flex: 1; max-width: 28rem; }
+  header.top .search input { padding-block: .55rem; }
+  header.top .grow { flex: 1; }
+  .btn.sm { padding: .55rem .9rem; font-size: .9rem; white-space: nowrap; }
+  .top-logo, .top-avatar { display: none; }
+  .app-main .block { flex: 1; min-height: 0; margin: 1rem 1.2rem; max-width: none; }
+  .app-main .block.bare { background: transparent; border: 0; padding: 0; }
+
+  .tabs { display: none; }
+
+  body:not(.authed) .side, body:not(.authed) header.top, body:not(.authed) .tabs { display: none !important; }
+
+  /* dashboard */
+  .dash { gap: 1rem; padding-inline-end: .3rem; }
+  .dhead { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+  .dhead h1 { font-size: 1.6rem; font-weight: 800; line-height: 1.15; }
+  .seg.mini { flex: none; }
+  .seg.mini button { padding: .45rem .9rem; font-size: .85rem; white-space: nowrap; }
+
+  .kpis { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .8rem; }
+  .kpi { position: relative; padding: .9rem 1rem; border-radius: 14px; background: var(--panel); border: 1px solid var(--line);
+    color: inherit; text-decoration: none; display: flex; flex-direction: column; gap: .25rem; min-width: 0; transition: border-color .2s; }
+  a.kpi:hover { border-color: rgba(247,241,227,.32); }
+  .kpi .k-label { font-size: .85rem; color: var(--muted); font-weight: 600; }
+  .kpi .k-value { font-size: 1.9rem; font-weight: 800; line-height: 1.1; letter-spacing: -.01em; }
+  .kpi.hero .k-value { font-size: 2.6rem; }
+  .kpi .k-sub { font-size: .82rem; color: var(--muted); display: flex; align-items: center; gap: .3rem; flex-wrap: wrap; }
+  .delta { font-weight: 800; }
+  .delta.up { color: var(--good); } .delta.down { color: var(--bad); }
+  .flag { display: inline-flex; align-items: center; gap: .25rem; font-weight: 800; }
+  .flag.bad { color: var(--bad); } .flag.warn { color: var(--warn); }
+  .kpi.hero { grid-column: span 1; background: linear-gradient(160deg, #13325c, var(--panel) 70%); }
+
+  .dgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .8rem;
+    grid-template-areas: "calls calls leads" "chart chart funnel" "installs installs installs"; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: .9rem 1rem; min-width: 0; display: flex; flex-direction: column; gap: .6rem; }
+  .p-calls { grid-area: calls; } .p-leads { grid-area: leads; } .p-chart { grid-area: chart; } .p-funnel { grid-area: funnel; } .p-installs { grid-area: installs; }
+  .ph { display: flex; align-items: baseline; justify-content: space-between; gap: .5rem; }
+  .ph h3 { font-size: 1rem; font-weight: 800; }
+  .ph a { color: var(--muted); font-size: .82rem; text-decoration: none; font-weight: 600; }
+  .ph a:hover { color: var(--cream); }
+  .plist { display: grid; gap: .4rem; }
+  .plist .item { padding: .55rem .7rem; }
+  .plist .callbtn { width: 2.3rem; height: 2.3rem; }
+  .tag { font-size: .72rem; font-weight: 800; padding: .1rem .45rem; border-radius: 6px; white-space: nowrap; }
+  .tag.late { background: rgba(255,122,140,.16); color: var(--bad); }
+  .tag.today { background: rgba(255,196,107,.14); color: var(--warn); }
+  .empty-p { color: var(--muted); font-size: .9rem; padding: .8rem .2rem; }
+  .inst-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: .5rem; }
+  .date-chip { flex: none; display: grid; place-items: center; width: 2.8rem; height: 2.8rem; border-radius: 10px; background: var(--surface);
+    border: 1px solid var(--line); line-height: 1; }
+  .date-chip b { font-size: 1.05rem; } .date-chip small { font-size: .65rem; color: var(--muted); }
+
+  /* charts */
+  .chart { position: relative; }
+  .chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .chart text { fill: var(--muted); font-size: 11px; font-family: inherit; }
+  .chart .lbl-val { fill: var(--cream); font-weight: 700; font-size: 11.5px; }
+  .chart .hit { fill: transparent; cursor: default; }
+  .chart .col { transition: opacity .15s; }
+  .chart:hover .col { opacity: .7; } .chart .col.hover { opacity: 1; }
+  .tip { position: absolute; z-index: 3; pointer-events: none; transform: translate(-50%, calc(-100% - 10px)); white-space: nowrap;
+    background: #f7f1e3; color: #07172c; border-radius: 8px; padding: .35rem .6rem; font-size: .8rem; font-weight: 600; box-shadow: 0 6px 18px rgba(0,0,0,.35); }
+  .tip b { font-weight: 800; }
+  .funnel { display: grid; gap: .55rem; }
+  .frow { display: grid; grid-template-columns: 6.2rem 1fr; align-items: center; gap: .6rem; font-size: .86rem; }
+  .frow .fl { color: var(--ink-2); font-weight: 600; }
+  .frow .ft { position: relative; height: 22px; }
+  .frow .fb { position: absolute; inset-block: 0; inset-inline-start: 0; border-radius: 0 4px 4px 0; background: var(--bar); min-width: 3px; }
+  [dir=rtl] .frow .fb { border-radius: 4px 0 0 4px; }
+  .frow .fv { position: absolute; top: 50%; transform: translateY(-50%); font-weight: 800; font-size: .85rem; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  /* responsive */
+  @media (max-width: 1250px) {
+    .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .kpi.hero { grid-column: span 3; }
+  }
+  @media (max-width: 1050px) { .side { width: 4.4rem; padding-inline: .5rem; } .nav a span, .me .who, .me .link, .side-logo { display: none; } .nav a { justify-content: center; position: relative; }
+    .nav .nb { position: absolute; top: .15rem; left: .15rem; } .me { justify-content: center; padding: .4rem; } }
+  @media (max-width: 900px) {
+    .dgrid { grid-template-columns: minmax(0, 1fr); grid-template-areas: "calls" "leads" "chart" "funnel" "installs"; }
+  }
+  @media (max-width: 720px) {
+    .side { display: none; }
+    header.top { padding: calc(.5rem + env(safe-area-inset-top)) 12px .5rem; }
+    header.top .search { display: none; }
+    .top-logo, .top-avatar { display: block; }
+    .top-logo img { height: 28px; width: auto; display: block; }
+    .top-avatar { width: 2.1rem; height: 2.1rem; display: grid; }
+    .app-main .block { margin: .6rem 12px; padding: .8rem; }
+    .app-main .block.bare { padding: 0; }
+    .tabs { display: flex; flex: none; background: var(--navy-deep); border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom); }
+    .tabs a { flex: 1; position: relative; display: grid; justify-items: center; gap: 2px; padding: .45rem 0 .4rem; color: var(--muted); text-decoration: none; font-size: .7rem; font-weight: 700; }
+    .tabs a svg { width: 22px; height: 22px; fill: currentColor; }
+    .tabs a.on { color: #fff; }
+    .tabs a.on svg { color: #ff5a73; }
+    .tabs .nb { position: absolute; top: .2rem; left: calc(50% - 1.4rem); min-width: 1.2rem; height: 1.2rem; font-size: .65rem; }
+    .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; }
+    .kpi.hero { grid-column: span 2; }
+    .kpi { padding: .75rem .8rem; }
+    .kpi .k-value { font-size: 1.55rem; }
+    .kpi.hero .k-value { font-size: 2.2rem; }
+    .dhead h1 { font-size: 1.3rem; }
+    .app-main { height: 100dvh; }
+    .app { flex-direction: column; }
+  }
 </style>
 </head>
 <body>
 
-<header>
-  <div class="brand">
-    <button class="hbtn" id="homeBtn" type="button" aria-label="מסך ראשי" hidden>
-      <svg viewBox="0 0 24 24"><path d="M12 3 2 11.5h3V21h5.5v-6h3v6H19v-9.5h3z"/></svg>
-    </button>
-    <img src="/logo/logo-on-navy.svg" alt="Chimneystar">
-  </div>
-  <button class="link" id="logout" hidden>יציאה</button>
-</header>
+<div class="app">
+  <aside class="side">
+    <a class="side-logo" href="#/"><img src="/logo/logo-on-navy.svg" alt="Chimneystar"></a>
+    <nav class="nav">
+      <a data-nav="home" href="#/"><svg viewBox="0 0 24 24"><path d="M3 13h8V3H3zm0 8h8v-6H3zm10 0h8V11h-8zm0-18v6h8V3z"/></svg><span>דשבורד</span></a>
+      <a data-nav="leads" href="#/leads"><svg viewBox="0 0 24 24"><path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm0 12h-4a3 3 0 0 1-6 0H5V5h14zm-3-5h-3V7h-2v3H8l4 4z"/></svg><span>לידים ממתינים</span><b class="nb" data-count="leads"></b></a>
+      <a data-nav="callbacks" href="#/callbacks"><svg viewBox="0 0 24 24"><path d="M6.6 10.8a15 15 0 0 0 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1A17 17 0 0 1 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1zM18 2v2.1A6 6 0 0 1 22 10h-2a4 4 0 0 0-2-3.4V9l-4-3.5z"/></svg><span>לחזור ללקוחות</span><b class="nb" data-count="calls"></b></a>
+      <a data-nav="orders" href="#/orders"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zm-1 7V3.5L18.5 9zM8 13h8v2H8zm0 4h5v2H8z"/></svg><span>הזמנות</span></a>
+      <a data-nav="customers" href="#/customers"><svg viewBox="0 0 24 24"><path d="M16 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-8 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 2c-2.7 0-8 1.3-8 4v3h16v-3c0-2.7-5.3-4-8-4zm8 0c-.3 0-.7 0-1.1.1 1.2.9 2.1 2.1 2.1 3.9v3h7v-3c0-2.7-5.3-4-8-4z"/></svg><span>כל הלקוחות</span></a>
+      <div class="sep"></div>
+      <a data-nav="visual" href="#/visual"><svg viewBox="0 0 24 24"><path d="M12 3 1 12h3v9h6v-6h4v6h6v-9h3l-4-3.3V4h-3v2.2zM19 1l.9 2.1L22 4l-2.1.9L19 7l-.9-2.1L16 4l2.1-.9z"/></svg><span>ויזואליזציה</span></a>
+      <a data-nav="settings" href="#/settings"><svg viewBox="0 0 24 24"><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7 7 0 0 0-1.7-1L15 3h-4l-.4 2.9a7 7 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7 7 0 0 0 1.7 1L11 21h4l.4-2.9a7 7 0 0 0 1.7-1l2.5 1 2-3.5zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg><span>הגדרות</span></a>
+    </nav>
+    <div class="me">
+      <a class="avatar" href="#/settings" data-initial></a>
+      <div class="who"><b data-agent-name>סוכן</b><small>סוכן מכירות</small></div>
+      <button class="link" id="logout" type="button">יציאה</button>
+    </div>
+  </aside>
 
-<div class="shell">
-  <div class="block">
+  <div class="app-main">
+    <header class="top">
+      <a class="top-logo" href="#/"><img src="/logo/logo-on-navy.svg" alt="Chimneystar"></a>
+      <form class="search" id="topSearch"><input type="search" id="topQ" placeholder="חיפוש לקוח לפי שם, טלפון או כתובת"></form>
+      <span class="grow"></span>
+      <a class="btn primary sm" href="#/customer-new">＋ לקוח</a>
+      <a class="btn sm" href="#/order-new">＋ הזמנה</a>
+      <a class="avatar top-avatar" href="#/settings" data-initial></a>
+    </header>
+    <div class="block">
 
     <!-- login -->
     <section class="view" data-view="login">
@@ -243,43 +378,48 @@
       </form>
     </section>
 
-    <!-- home -->
+    <!-- dashboard -->
     <section class="view" data-view="home">
-      <div class="hello">
-        <h2 id="hello">שלום</h2>
-        <p class="hint" id="today"></p>
+      <div class="scroll dash">
+        <div class="dhead">
+          <div><h1 id="hello">שלום</h1><p class="hint" id="today"></p></div>
+          <div class="seg mini" id="scope" role="group" aria-label="הצג נתונים של">
+            <button type="button" data-mine="1">שלי</button>
+            <button type="button" data-mine="0">כל הצוות</button>
+          </div>
+        </div>
+        <div class="kpis" id="kpis"></div>
+        <div class="dgrid">
+          <section class="panel p-calls">
+            <div class="ph"><h3>שיחות להיום</h3><a href="#/callbacks">לכל הרשימה ←</a></div>
+            <div class="plist" id="dCalls"></div>
+          </section>
+          <section class="panel p-leads">
+            <div class="ph"><h3>לידים חדשים</h3><a href="#/leads">לכל הלידים ←</a></div>
+            <div class="plist" id="dLeads"></div>
+          </section>
+          <section class="panel p-chart">
+            <div class="ph"><h3>הכנסות לפי שבוע</h3><span class="hint">8 שבועות אחרונים</span></div>
+            <div class="chart" id="dChart"></div>
+          </section>
+          <section class="panel p-funnel">
+            <div class="ph"><h3>משפך מכירות</h3><span class="hint" id="dConv"></span></div>
+            <div class="funnel" id="dFunnel"></div>
+          </section>
+          <section class="panel p-installs">
+            <div class="ph"><h3>התקנות ב-14 הימים הקרובים</h3><a href="#/orders">לכל ההזמנות ←</a></div>
+            <div class="inst-grid" id="dInstalls"></div>
+          </section>
+        </div>
       </div>
-      <form class="search" id="homeSearch"><input type="search" id="homeQ" placeholder="חיפוש לקוח לפי שם, טלפון או כתובת"></form>
-      <nav class="tiles">
-        <a class="tile" href="#/customer-new">
-          <span class="ti"><svg viewBox="0 0 24 24"><path d="M10 12a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9zm0 2c-4 0-8 2-8 5v2h11.5a6 6 0 0 1-.5-2.4c0-1.8.7-3.4 1.9-4.5A12 12 0 0 0 10 14zm9-1h-2v3h-3v2h3v3h2v-3h3v-2h-3z"/></svg></span>
-          פתיחת לקוח חדש
-        </a>
-        <a class="tile" href="#/leads">
-          <b class="badge" id="bLeads"></b>
-          <span class="ti"><svg viewBox="0 0 24 24"><path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm0 12h-4a3 3 0 0 1-6 0H5V5h14zm-3-5h-3V7h-2v3H8l4 4z"/></svg></span>
-          לידים ממתינים
-        </a>
-        <a class="tile" href="#/callbacks" id="tCallbacks">
-          <b class="badge" id="bCallbacks"></b>
-          <span class="ti"><svg viewBox="0 0 24 24"><path d="M6.6 10.8a15 15 0 0 0 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1A17 17 0 0 1 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1zM18 2v2.1A6 6 0 0 1 22 10h-2a4 4 0 0 0-2-3.4V9l-4-3.5z"/></svg></span>
-          לקוחות לחזור אליהם
-          <small id="sCallbacks"></small>
-        </a>
-        <a class="tile" href="#/order-new">
-          <span class="ti"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zm-1 7V3.5L18.5 9zM8 13h8v2H8zm0 4h5v2H8z"/></svg></span>
-          פתיחת הזמנה חדשה
-        </a>
-        <a class="tile" href="#/visual">
-          <span class="ti"><svg viewBox="0 0 24 24"><path d="M12 3 1 12h3v9h6v-6h4v6h6v-9h3l-4-3.3V4h-3v2.2zM19 1l.9 2.1L22 4l-2.1.9L19 7l-.9-2.1L16 4l2.1-.9z"/></svg></span>
-          ויזואליזציה
-          <small>לפני / אחרי</small>
-        </a>
-        <a class="tile" href="#/settings">
-          <span class="ti"><svg viewBox="0 0 24 24"><path d="M12 12a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9zm0 2c-4.4 0-8 2.2-8 5v2h16v-2c0-2.8-3.6-5-8-5z"/></svg></span>
-          הגדרות ופרטים אישיים
-        </a>
-      </nav>
+    </section>
+
+    <!-- orders -->
+    <section class="view" data-view="orders">
+      <div class="vhead"><h2>הזמנות</h2>
+        <div class="seg mini" id="ordFilter"><button type="button" data-f="open" class="on">פתוחות</button><button type="button" data-f="all">הכל</button></div>
+      </div>
+      <div class="scroll list" id="ordBody"></div>
     </section>
 
     <!-- leads / callbacks / search results share one list screen -->
@@ -474,6 +614,14 @@
         </div>
       </section>
     </section>
+    </div>
+    <nav class="tabs">
+      <a data-nav="home" href="#/"><svg viewBox="0 0 24 24"><path d="M3 13h8V3H3zm0 8h8v-6H3zm10 0h8V11h-8zm0-18v6h8V3z"/></svg>דשבורד</a>
+      <a data-nav="leads" href="#/leads"><svg viewBox="0 0 24 24"><path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm0 12h-4a3 3 0 0 1-6 0H5V5h14zm-3-5h-3V7h-2v3H8l4 4z"/></svg>לידים<b class="nb" data-count="leads"></b></a>
+      <a data-nav="callbacks" href="#/callbacks"><svg viewBox="0 0 24 24"><path d="M6.6 10.8a15 15 0 0 0 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1A17 17 0 0 1 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1zM18 2v2.1A6 6 0 0 1 22 10h-2a4 4 0 0 0-2-3.4V9l-4-3.5z"/></svg>לחזור<b class="nb" data-count="calls"></b></a>
+      <a data-nav="orders" href="#/orders"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zm-1 7V3.5L18.5 9zM8 13h8v2H8zm0 4h5v2H8z"/></svg>הזמנות</a>
+      <a data-nav="visual" href="#/visual"><svg viewBox="0 0 24 24"><path d="M12 3 1 12h3v9h6v-6h4v6h6v-9h3l-4-3.3V4h-3v2.2zM19 1l.9 2.1L22 4l-2.1.9L19 7l-.9-2.1L16 4l2.1-.9z"/></svg>הדמיה</a>
+    </nav>
   </div>
 </div>
 
