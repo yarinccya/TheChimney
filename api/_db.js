@@ -3,10 +3,20 @@
 let runQuery = null;
 let ready = null;
 
+// The integration may add a prefix (e.g. STORAGE_DATABASE_URL), so accept any *_DATABASE_URL / *_POSTGRES_URL too.
+function databaseUrl() {
+  const env = process.env;
+  if (env.DATABASE_URL || env.POSTGRES_URL) return env.DATABASE_URL || env.POSTGRES_URL;
+  const key = Object.keys(env).find((k) => /(^|_)(DATABASE_URL|POSTGRES_URL)$/.test(k) && env[k]);
+  return key ? env[key] : "";
+}
+
+class NoDatabase extends Error {}
+
 function query(text, params = []) {
   if (!runQuery) {
-    const url = process.env.DATABASE_URL || process.env.POSTGRES_URL;
-    if (!url) throw new Error("DATABASE_URL is not set on the server (connect Neon in Vercel → Storage)");
+    const url = databaseUrl();
+    if (!url) throw new NoDatabase("DATABASE_URL is not set on the server (connect Neon in Vercel → Storage)");
     const { neon } = require("@neondatabase/serverless");
     const sql = neon(url);
     runQuery = (t, p) => sql.query(t, p);
@@ -67,4 +77,4 @@ function ensureSchema() {
   return ready;
 }
 
-module.exports = { query, useQuery, ensureSchema };
+module.exports = { query, useQuery, ensureSchema, NoDatabase };

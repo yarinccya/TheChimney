@@ -1,6 +1,6 @@
 // Public endpoint for the website's lead form (lead.html). Saves the lead as a new
 // customer with status "new", so it shows up under "pending leads" in /studio.
-const { query, ensureSchema } = require("./_db");
+const { query, ensureSchema, NoDatabase } = require("./_db");
 
 const str = (v, max) => (typeof v === "string" ? v.trim().slice(0, max) : "");
 
@@ -21,6 +21,7 @@ module.exports = async function handler(req, res) {
     res.json({ ok: true });
   } catch (e) {
     console.error(e);
-    res.status(500).json({ error: "Could not save" });
+    // reason tells the owner what to fix without exposing details
+    res.status(500).json({ error: "Could not save", reason: e instanceof NoDatabase ? "no-database-url" : "database-error" });
   }
 };
