@@ -3,19 +3,11 @@
 //   STUDIO_PASSWORD  - the password for /studio (required)
 //   GEMINI_API_KEY   - Google AI Studio key (required)
 //   GEMINI_MODEL     - optional, defaults to Nano Banana Pro
-const crypto = require("crypto");
 const sharp = require("sharp");
+const { passwordOk } = require("./_auth");
 
 const MODEL = process.env.GEMINI_MODEL || "gemini-3-pro-image";
 const ASPECTS = ["1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9"];
-
-function passwordOk(given) {
-  const real = process.env.STUDIO_PASSWORD;
-  if (!real || typeof given !== "string") return false;
-  const a = crypto.createHash("sha256").update(given).digest();
-  const b = crypto.createHash("sha256").update(real).digest();
-  return crypto.timingSafeEqual(a, b);
-}
 
 const lines = (arr) => arr.filter((l) => l !== "" && l != null).join("\n");
 

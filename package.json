@@ -1,8 +1,9 @@
 {
   "name": "thechimneys-site",
   "private": true,
-  "description": "Static site; the only dependency is for the private /studio API function.",
+  "description": "Static site; dependencies are for the private /studio API functions.",
   "dependencies": {
+    "@neondatabase/serverless": "^1.2.0",
     "sharp": "^0.34.3"
   }
 }

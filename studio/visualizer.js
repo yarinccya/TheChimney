@@ -1,12 +1,12 @@
+// Before/after chimney visualizer (the #/visual screen of the studio portal).
 (() => {
-  const $ = (id) => document.getElementById(id);
-  const API = "/api/studio";
+  const { $, sizeTo } = Studio;
+  const api = (body) => Studio.api("/api/studio", body);
   const HOUSE_MAX = 2048;   // long side sent to the model
   const REF_MAX = 1024;
   const VIEW_MAX = 1280;    // editor + mask resolution
   const ASPECTS = [["1:1", 1], ["2:3", 2 / 3], ["3:2", 3 / 2], ["3:4", 3 / 4], ["4:3", 4 / 3], ["4:5", 4 / 5], ["5:4", 5 / 4], ["9:16", 9 / 16], ["16:9", 16 / 9], ["21:9", 21 / 9]];
 
-  let password = "";
   let photo = null;          // canvas, ≤ HOUSE_MAX
   let mask = null;           // canvas, view resolution, white = work area
   let history = [];
@@ -18,8 +18,6 @@
 
   /* ---------- helpers ---------- */
   const canvas = (w, h) => Object.assign(document.createElement("canvas"), { width: Math.round(w), height: Math.round(h) });
-  const store = { get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },
-                  set: (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} } };
 
   async function loadBitmap(src) {
     if (src instanceof Blob) {
@@ -48,64 +46,15 @@
     return ASPECTS.reduce((best, a) => Math.abs(Math.log(a[1]) - r) < Math.abs(Math.log(best[1]) - r) ? a : best)[0];
   }
 
-  async function api(body) {
-    const r = await fetch(API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password, ...body }) });
-    let data = {};
-    try { data = await r.json(); } catch { data = { error: `שגיאת שרת (${r.status})` }; }
-    if (r.status === 401) { logout(); }
-    if (!r.ok) throw new Error(data.error || `שגיאה ${r.status}`);
-    return data;
-  }
-
   /* ---------- steps (one block, one step at a time) ---------- */
+  const screen = document.querySelector('[data-view="visual"]');
   function goStep(name) {
-    for (const s of document.querySelectorAll(".step")) s.classList.toggle("on", s.dataset.step === String(name));
+    for (const s of screen.querySelectorAll(".step")) s.classList.toggle("on", s.dataset.step === String(name));
   }
-  document.addEventListener("click", (e) => {
+  screen.addEventListener("click", (e) => {
     const b = e.target.closest("[data-go]");
     if (b) goStep(b.dataset.go);
   });
-
-  // Keep an element at a fixed aspect ratio, as large as its .fitbox parent allows.
-  const sized = new Map();
-  const applySize = (el, [w, h]) => {
-    const box = el.parentElement, s = Math.min(box.clientWidth / w, box.clientHeight / h);
-    if (s > 0) { el.style.width = `${w * s}px`; el.style.height = `${h * s}px`; }
-  };
-  const fitObserver = new ResizeObserver((entries) => {
-    for (const { target } of entries) for (const [el, wh] of sized) if (el.parentElement === target) applySize(el, wh);
-  });
-  function sizeTo(el, w, h) {
-    sized.set(el, [w, h]);
-    fitObserver.observe(el.parentElement);
-    applySize(el, [w, h]);
-  }
-
-  /* ---------- login ---------- */
-  function showApp(on) {
-    $("logout").hidden = !on;
-    goStep(on ? 1 : "login");
-  }
-
-  function logout() {
-    password = "";
-    store.set("studioPw", null);
-    showApp(false);
-  }
-
-  $("loginForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    $("loginErr").textContent = "";
-    password = $("pw").value;
-    try {
-      await api({ action: "login" });
-      store.set("studioPw", password);
-      showApp(true);
-    } catch (err) {
-      $("loginErr").textContent = err.message;
-    }
-  });
-  $("logout").addEventListener("click", logout);
 
   /* ---------- 1. photo ---------- */
   async function onPhoto(file) {
@@ -551,7 +500,6 @@
       const gen = await asCrop(image);
       showResult(original, crop, gen, smartMask(cropC, gen, maskC));
     } catch (err) {
-      if (!password) return; // logged out (wrong password) - the login step is already showing
       $("working").hidden = true;
       $("failed").hidden = false;
       $("failText").textContent = `ההדמיה נכשלה: ${err.message}`;
@@ -563,12 +511,5 @@
 
   /* ---------- start ---------- */
   renderCatalog();
-  const saved = store.get("studioPw");
-  if (saved) {
-    password = saved;
-    showApp(true);
-    api({ action: "login" }).catch(() => {});
-  } else {
-    showApp(false);
-  }
+  Studio.route("visual", "visual", () => { if (!screen.querySelector(".step.on")) goStep(1); });
 })();

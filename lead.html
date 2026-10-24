@@ -89,6 +89,7 @@
     <p class="lead">Leave your details and we'll call you back within one business day.</p>
 
     <form id="lead" novalidate>
+      <input name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
       <label>Service
         <select name="service" id="service">
           <option value="install">New chimney installation</option>
@@ -122,9 +123,9 @@
   <script src="footer.js"></script>
 <script>
 (() => {
-  // Where leads are sent. Set this to a form backend URL (it receives the fields as JSON via POST).
-  // Left empty, the form opens the visitor's email app with the details filled in instead.
-  const ENDPOINT = "";
+  // Leads go to the studio database and show up under "pending leads" for the sales agents.
+  // Set to "" to fall back to opening the visitor's email app instead.
+  const ENDPOINT = "/api/lead";
   const LEAD_EMAIL = "info@chimneystar.com";
   const TITLES = { install: "Get a free install quote", clean: "Book a chimney cleaning", replace: "Get a free replacement quote" };
 
@@ -145,15 +146,16 @@
     if (data.email && !form.email.checkValidity()) return fail("That email address doesn't look right.", form.email);
     data.serviceLabel = service.options[service.selectedIndex].text;
 
-    if (!ENDPOINT) {
+    const byEmail = () => {
       const body = ["Service: " + data.serviceLabel, "Name: " + data.name, "Phone: " + data.phone,
         "Email: " + (data.email || "-"), "City / ZIP: " + (data.location || "-"), "", data.message || ""].join("\n");
       location.href = "mailto:" + LEAD_EMAIL + "?subject=" + encodeURIComponent("New lead: " + data.serviceLabel) + "&body=" + encodeURIComponent(body);
-      return;
-    }
+    };
+    if (!ENDPOINT) return byEmail();
     sendBtn.disabled = true; sendBtn.textContent = "Sending…";
     try {
       const res = await fetch(ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" }, body: JSON.stringify(data) });
+      if (res.status >= 500) { byEmail(); sendBtn.disabled = false; sendBtn.textContent = "Send my details"; return; } // server can't save: don't lose the lead
       if (!res.ok) throw new Error(res.status);
       form.hidden = true; $("done").hidden = false; $("done").focus();
     } catch (err) {
