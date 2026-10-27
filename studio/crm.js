@@ -1,6 +1,6 @@
 // Sales agents' screens: dashboard, leads, call-backs, customer card, customer and order forms, settings.
 (() => {
-  const { $, crm, go, route, toast, esc, waNumber, fmtDate, ago, localInput, agent, store } = Studio;
+  const { $, crm, go, route, toast, esc, waNumber, fmtDate, ago, localInput, agent, store, fitRows, paginate } = Studio;
 
   const STATUS = { new: "ליד חדש", follow_up: "לחזור", customer: "לקוח", closed: "לא רלוונטי" };
   const ORDER_STATUS = { new: "חדשה", confirmed: "אושרה", scheduled: "נקבעה התקנה", done: "בוצעה", cancelled: "בוטלה" };
@@ -93,19 +93,37 @@
     else box.innerHTML = `<div class="empty-p">${empty}</div>`;
   }
 
+  // Dashboard panels: rows that don't fit are hidden; the panel's link says how many more there are.
+  const panels = [];
+  function panelList(box, nodes, empty, total, link, label) {
+    fill(box, nodes, empty);
+    const fit = () => {
+      const hidden = fitRows(box) + Math.max(0, total - nodes.length);
+      link.textContent = hidden ? `עוד ${hidden} ←` : label;
+    };
+    const p = panels.find((x) => x.box === box);
+    if (p) p.fit = fit; else {
+      const entry = { box, fit, h: 0 };
+      panels.push(entry);
+      new ResizeObserver(() => { if (Math.abs(box.clientHeight - entry.h) > 4) { entry.h = box.clientHeight; entry.fit(); } }).observe(box);
+    }
+    fit();
+  }
+
   // Weekly revenue: one series, columns, current week in the accent step.
   // Drawn at the box's real width, so the 11px text stays 11px on a phone.
-  let chartWeeks = null, chartW = 0;
+  let chartWeeks = null, chartW = 0, chartH = 0;
   new ResizeObserver(() => {
-    const w = $("dChart").clientWidth;
-    if (chartWeeks && w && Math.abs(w - chartW) > 30) revenueChart(chartWeeks);
+    const b = $("dChart");
+    if (chartWeeks && b.clientWidth && (Math.abs(b.clientWidth - chartW) > 20 || Math.abs(b.clientHeight - chartH) > 12)) revenueChart(chartWeeks);
   }).observe($("dChart"));
 
   function revenueChart(weeks) {
     chartWeeks = weeks;
     chartW = $("dChart").clientWidth;
-    const W = Math.max(300, Math.round(chartW || 640)), H = 210, padL = 44, padB = 26, padT = 18, plotW = W - padL - 8, plotH = H - padB - padT;
-    const max = Math.max(...weeks.map((w) => w.revenue), 1);
+    chartH = $("dChart").clientHeight;
+    const W = Math.max(300, Math.round(chartW || 640)), H = Math.max(120, Math.round(chartH || 210)), padL = 44, padB = 26, padT = 18, plotW = W - padL - 8, plotH = H - padB - padT;
+    const max = Math.max(...weeks.map((w) => w.revenue)) || 10000;
     const step = Math.pow(10, Math.floor(Math.log10(max)));
     const top = Math.ceil(max / (step / 2)) * (step / 2);
     const y = (v) => padT + plotH - (v / top) * plotH;
@@ -280,21 +298,21 @@
       renderKpis(k);
 
       const now = new Date();
-      fill($("dCalls"), d.calls.map((c) => {
+      panelList($("dCalls"), d.calls.map((c) => {
         const t = new Date(c.follow_up_at), late = t < now;
-        const tag = late ? `<span class="tag late">באיחור · ${fmtDate(t)}</span>` : `<span class="tag today">${t.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" })}</span>`;
+        const tag = late ? `<span class="tag late" title="${fmtDate(t)}">באיחור</span>` : `<span class="tag today">${t.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" })}</span>`;
         return miniItem(c, { tag, sub: [c.service, c.address].filter(Boolean).join(" · ") });
-      }), "אין שיחות להיום 🎉");
+      }), "אין שיחות להיום 🎉", k.calls_due, $("dCallsLink"), "לכל הרשימה ←");
 
-      fill($("dLeads"), d.leads.map((c) => miniItem(c, {
+      panelList($("dLeads"), d.leads.map((c) => miniItem(c, {
         when: ago(c.created_at), sub: [c.service, SOURCE[c.source] || c.source].filter(Boolean).join(" · "),
-      })), "אין לידים ממתינים");
+      })), "אין לידים ממתינים", k.leads_new, $("dLeadsLink"), "לכל הלידים ←");
 
       revenueChart(d.weeks);
       funnel(d.pipeline, k);
       renderMobile(d, $("hello").textContent);
 
-      fill($("dInstalls"), d.installs.map(installItem), "אין התקנות מתוכננות בשבועיים הקרובים");
+      panelList($("dInstalls"), d.installs.map(installItem), "אין התקנות בשבועיים הקרובים", d.installs.length, $("dInstallsLink"), "לכל ההזמנות ←");
     } catch (e) {
       if (live()) toast(e.message, true);
     }
@@ -306,10 +324,11 @@
     const live = fresh();
     for (const b of $("ordFilter").children) b.classList.toggle("on", b.dataset.f === ordFilter);
     $("ordBody").innerHTML = '<div class="none">טוען…</div>';
+    $("ordPager").hidden = true;
     try {
       const rows = await crm("orders", { filter: ordFilter, mine: mine() });
       if (!live()) return;
-      fill($("ordBody"), rows.map((o) => {
+      paginate($("ordBody"), rows.map((o) => {
         const el = document.createElement("a");
         el.className = "item";
         el.href = `#/order/${o.customer_id}/${o.id}`;
@@ -317,7 +336,7 @@
           <div class="sub">${esc([o.service, o.product, o.install_date ? `התקנה ${fmtDate(o.install_date, false)}` : "", o.agent].filter(Boolean).join(" · "))}</div></div>
           <span class="when">${money(o.price)}</span><span class="pill">${ORDER_STATUS[o.status] || o.status}</span>`;
         return el;
-      }), ordFilter === "open" ? "אין הזמנות פתוחות" : "אין הזמנות עדיין");
+      }), $("ordPager"), ordFilter === "open" ? "אין הזמנות פתוחות" : "אין הזמנות עדיין");
     } catch (e) {
       if (live()) $("ordBody").innerHTML = `<div class="none">${esc(e.message)}</div>`;
     }
@@ -357,14 +376,13 @@
     $("listQ").value = q;
     $("listCount").textContent = "";
     $("listBody").innerHTML = '<div class="none">טוען…</div>';
+    $("listPager").hidden = true;
     try {
       const rows = await crm("list", { filter, q });
       if (!live()) return;
       $("listCount").textContent = rows.length ? `${rows.length}` : "";
-      $("listBody").replaceChildren(...rows.map((c) => item(c, filter)));
-      if (!rows.length) {
-        $("listBody").innerHTML = `<div class="none">${q ? "לא נמצאו לקוחות" : filter === "leads" ? "אין לידים ממתינים 🎉" : filter === "callbacks" ? "אין לקוחות לחזור אליהם" : "אין לקוחות עדיין"}</div>`;
-      }
+      paginate($("listBody"), rows.map((c) => item(c, filter)), $("listPager"),
+        q ? "לא נמצאו לקוחות" : filter === "leads" ? "אין לידים ממתינים 🎉" : filter === "callbacks" ? "אין לקוחות לחזור אליהם" : "אין לקוחות עדיין");
     } catch (e) {
       if (live()) $("listBody").innerHTML = `<div class="none">${esc(e.message)}</div>`;
     }
@@ -382,8 +400,10 @@
   /* ---------- customer card ---------- */
   let current = null; // { customer, orders, activity }
 
+  let custId = null;
   route("customer", "customer", async (id) => {
     const live = fresh();
+    if (id !== custId) { custId = id; custTab = "info"; }
     $("custBody").innerHTML = '<div class="none">טוען…</div>';
     try {
       const data = await crm("get", { id });
@@ -395,6 +415,7 @@
     }
   });
 
+  let custTab = "info";
   function renderCustomer() {
     const { customer: c, orders, activity } = current;
     const followUp = c.status === "follow_up" && c.follow_up_at ? ` · ${fmtDate(c.follow_up_at)}` : "";
@@ -404,35 +425,63 @@
     ].filter(([, v]) => v);
 
     $("custBody").innerHTML = `
-      <div class="vhead"><h2>${esc(c.name)}</h2><span class="pill ${c.status}">${STATUS[c.status] || c.status}${esc(followUp)}</span></div>
-      <div class="facts">${facts.map(([k, v]) => `<div>${k}: <b>${esc(v)}</b></div>`).join("")}</div>
-      ${c.notes ? `<p class="hint" style="white-space:pre-wrap">${esc(c.notes)}</p>` : ""}
-      <div class="quick" style="margin-top:.6rem">
-        <a class="btn green" href="tel:${esc(c.phone)}">📞 התקשר</a>
-        <a class="btn" href="https://wa.me/${waNumber(c.phone)}" target="_blank" rel="noopener">💬 וואטסאפ</a>
-        <a class="btn" href="#/customer-edit/${c.id}">✏️ עריכה</a>
+      <div class="c-head">
+        <h2>${esc(c.name)}</h2><span class="pill ${c.status}">${STATUS[c.status] || c.status}${esc(followUp)}</span>
       </div>
-      <div class="quick">
-        <button class="btn" type="button" id="cFollow">⏰ לחזור אליו</button>
-        <button class="btn" type="button" id="cWon">✅ לקוח</button>
-        <button class="btn" type="button" id="cLost">✖ לא רלוונטי</button>
+      <div class="c-actions">
+        <a class="act green" href="tel:${esc(c.phone)}"><i>📞</i><span>התקשר</span></a>
+        <a class="act" href="https://wa.me/${waNumber(c.phone)}" target="_blank" rel="noopener"><i>💬</i><span>וואטסאפ</span></a>
+        <button class="act" type="button" id="cFollow"><i>⏰</i><span>לחזור אליו</span></button>
+        <a class="act primary" href="#/order-new/${c.id}"><i>🧾</i><span>הזמנה</span></a>
+        <button class="act" type="button" id="cWon"><i>✅</i><span>לקוח</span></button>
+        <button class="act" type="button" id="cLost"><i>✖</i><span>לא רלוונטי</span></button>
+        <a class="act" href="#/customer-edit/${c.id}"><i>✏️</i><span>עריכה</span></a>
       </div>
-      <a class="btn primary" href="#/order-new/${c.id}" style="margin-top:.2rem">🧾 הזמנה חדשה ללקוח</a>
+      <div class="mtabs c-tabs" id="cTabs" role="tablist">
+        <button type="button" data-t="info">פרטים</button>
+        <button type="button" data-t="orders">הזמנות<em>${orders.length}</em></button>
+        <button type="button" data-t="log">תיעוד<em>${activity.length}</em></button>
+      </div>
+      <div class="c-pane" data-pane="info">
+        <div class="facts">${facts.map(([k, v]) => `<div>${k}<b>${esc(v)}</b></div>`).join("")}</div>
+        ${c.notes ? `<p class="c-notes" title="${esc(c.notes)}">${esc(c.notes)}</p>` : ""}
+      </div>
+      <div class="c-pane" data-pane="orders">
+        <div class="pagebox list" id="cOrders"></div>
+        <div class="pager" id="cOrdersPager" hidden></div>
+      </div>
+      <div class="c-pane" data-pane="log">
+        <form class="addnote" id="noteForm">
+          <input class="field" id="noteText" placeholder="מה היה בשיחה?">
+          <button class="btn primary" type="submit">הוסף</button>
+        </form>
+        <div class="pagebox timeline" id="cLog"></div>
+        <div class="pager" id="cLogPager" hidden></div>
+      </div>`;
 
-      <div class="sec">הזמנות (${orders.length})</div>
-      <div class="list orders" style="display:grid">${orders.map((o) => `
-        <a class="item" href="#/order/${c.id}/${o.id}">
-          <div class="main"><div class="name">#${o.id} · ${esc(o.service || o.product)}</div>
+    const showTab = (t) => {
+      custTab = t;
+      for (const b of $("cTabs").children) b.classList.toggle("on", b.dataset.t === t);
+      for (const p of $("custBody").querySelectorAll(".c-pane")) p.classList.toggle("on", p.dataset.pane === t);
+      if (t === "orders") paginate($("cOrders"), orders.map((o) => {
+        const el = document.createElement("a");
+        el.className = "item";
+        el.href = `#/order/${c.id}/${o.id}`;
+        el.innerHTML = `<div class="main"><div class="name">#${o.id} · ${esc(o.service || o.product)}</div>
           <div class="sub">${esc([o.product, money(o.price), o.install_date ? `התקנה ${fmtDate(o.install_date, false)}` : ""].filter(Boolean).join(" · "))}</div></div>
-          <span class="pill">${ORDER_STATUS[o.status] || o.status}</span>
-        </a>`).join("") || '<div class="hint">אין הזמנות עדיין</div>'}</div>
-
-      <div class="sec">תיעוד שיחות והערות</div>
-      <form class="addnote" id="noteForm">
-        <input class="field" id="noteText" placeholder="מה היה בשיחה?">
-        <button class="btn primary" type="submit">הוסף</button>
-      </form>
-      <div class="timeline">${activity.map((a) => `<div>${esc(a.text)}<small>${fmtDate(a.created_at)}${a.agent ? ` · ${esc(a.agent)}` : ""}</small></div>`).join("")}</div>`;
+          <span class="pill">${ORDER_STATUS[o.status] || o.status}</span>`;
+        return el;
+      }), $("cOrdersPager"), "אין הזמנות עדיין");
+      if (t === "log") paginate($("cLog"), activity.map((a) => {
+        const el = document.createElement("div");
+        el.className = "item";
+        el.title = a.text;
+        el.innerHTML = `<span class="t">${esc(a.text)}</span><small>${fmtDate(a.created_at)}${a.agent ? ` · ${esc(a.agent)}` : ""}</small>`;
+        return el;
+      }), $("cLogPager"), "אין תיעוד עדיין");
+    };
+    $("cTabs").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) showTab(b.dataset.t); });
+    showTab(custTab);
 
     $("cFollow").addEventListener("click", () => openFollowUp(c));
     $("cWon").addEventListener("click", () => setStatus(c.id, "customer"));
@@ -444,6 +493,7 @@
       try {
         await crm("addNote", { id: c.id, text });
         toast("ההערה נשמרה");
+        custTab = "log";
         Studio.render();
       } catch (err) { toast(err.message, true); }
     });
@@ -525,9 +575,12 @@
       $("ofChange")?.addEventListener("click", () => pickCustomer(null));
       return;
     }
-    box.innerHTML = `<div class="search"><input type="search" id="ofQ" placeholder="חפש לקוח לפי שם או טלפון"></div>
-      <div class="list" id="ofResults" style="display:grid;margin-top:.4rem"></div>
-      <a class="btn" href="#/customer-new" style="margin-top:.4rem">➕ לקוח חדש</a>`;
+    // results open as a dropdown over the form, so the form never grows past the screen
+    box.innerHTML = `<div class="picker">
+        <div class="search"><input type="search" id="ofQ" placeholder="חפש לקוח לפי שם או טלפון"></div>
+        <a class="btn" href="#/customer-new">➕ חדש</a>
+        <div class="list dropdown" id="ofResults"></div>
+      </div>`;
     let t;
     $("ofQ").addEventListener("input", () => {
       clearTimeout(t);
@@ -536,7 +589,7 @@
         if (!q) { $("ofResults").innerHTML = ""; return; }
         try {
           const rows = await crm("list", { filter: "", q });
-          $("ofResults").replaceChildren(...rows.slice(0, 8).map((c) => {
+          $("ofResults").replaceChildren(...rows.slice(0, 6).map((c) => {
             const el = document.createElement("button");
             el.type = "button";
             el.className = "item";
@@ -589,12 +642,9 @@
   /* ---------- settings ---------- */
   route("settings", "settings", () => {
     const a = agent();
-    $("sfFirst").hidden = !!a.name;
     $("sfName").value = a.name || "";
     $("sfPhone").value = a.phone || "";
     $("sfEmail").value = a.email || "";
-    $("sfUser").textContent = a.username || "";
-    $("sfRole").textContent = a.role || "";
   });
   $("sf").addEventListener("submit", async (e) => {
     e.preventDefault();

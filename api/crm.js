@@ -94,16 +94,16 @@ const actions = {
 
     const calls = await query(`SELECT id, name, phone, address, service, follow_up_at FROM customers
       WHERE status = 'follow_up' AND ($2::text IS NULL OR agent = $2) AND ${local("follow_up_at")} < ${day} + interval '1 day'
-      ORDER BY follow_up_at LIMIT 8`, [z, who]);
+      ORDER BY follow_up_at LIMIT 15`, [z, who]);
 
     const leads = await query(`SELECT id, name, phone, address, service, source, created_at FROM customers
-      WHERE status = 'new' ORDER BY created_at DESC LIMIT 6`);
+      WHERE status = 'new' ORDER BY created_at DESC LIMIT 15`);
 
     const installs = await query(`SELECT o.id, o.customer_id, o.service, o.product, o.price, o.install_date::text AS install_date, o.status, c.name, c.address
       FROM orders o JOIN customers c ON c.id = o.customer_id
       WHERE o.status IN ('new','confirmed','scheduled') AND o.install_date IS NOT NULL AND ($2::text IS NULL OR o.agent = $2)
         AND o.install_date >= (${day})::date AND o.install_date < (${day})::date + 14
-      ORDER BY o.install_date LIMIT 6`, [z, who]);
+      ORDER BY o.install_date LIMIT 15`, [z, who]);
 
     return { kpis: k, pipeline, weeks, calls, leads, installs };
   },

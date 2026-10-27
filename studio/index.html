@@ -227,6 +227,10 @@
   .app-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
   header.top { flex: none; display: flex; align-items: center; gap: .6rem; padding: .7rem 1.2rem; background: var(--navy-deep);
     border-bottom: 1px solid var(--line); }
+  .search { flex: none; position: relative; }
+  .search input { width: 100%; padding: .65rem 2.4rem .65rem .9rem; border-radius: 12px; border: 1px solid var(--line); background: var(--navy-deep); color: var(--cream); appearance: none; }
+  .search input::placeholder { color: var(--muted); }
+  .search::before { content: "⌕"; position: absolute; right: .85rem; top: 50%; transform: translateY(-52%); font-size: 1.3rem; color: var(--muted); pointer-events: none; }
   header.top .search { flex: 1; max-width: 28rem; }
   header.top .search input { padding-block: .55rem; }
   header.top .grow { flex: 1; }
@@ -339,7 +343,7 @@
 
   /* ---------- phone dashboard (no scrolling) ---------- */
   .mdash { display: none; }
-  @media (max-width: 720px) {
+  @media (max-width: 900px) {
     [data-view="home"] .dash { display: none; }
     .mdash { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: .5rem; }
     .mhead { flex: none; display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
@@ -383,10 +387,100 @@
     .mmore:empty { display: none; }
   }
   /* very short screens (phone on its side): let it scroll rather than squash */
-  @media (max-width: 720px) and (max-height: 560px) {
+  @media (max-width: 900px) and (max-height: 560px) {
     .mdash { overflow-y: auto; }
     .mpanel { flex: none; min-height: 16rem; }
   }
+
+  /* ---------- no scrolling anywhere ---------- */
+  .scroll { scrollbar-width: thin; }
+  .pagebox { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: .45rem; }
+  .pagebox > .item { flex: none; }
+  .pager { flex: none; display: flex; align-items: center; justify-content: center; gap: 1rem; font-size: .85rem; color: var(--muted); font-weight: 700; }
+  .pager button { border: 1px solid var(--line); background: var(--navy-deep); border-radius: 999px; padding: .4rem .9rem; cursor: pointer; font-weight: 700; font-size: .85rem; }
+  .pager button:disabled { opacity: .35; cursor: default; }
+
+  /* desktop dashboard: exactly one screen */
+  [data-view="home"] .dash { overflow: hidden; }
+  .kpis { flex: none; }
+  .kpi .k-sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+  .dgrid { flex: 1; min-height: 0; grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas: "calls leads installs" "chart chart funnel"; }
+  .panel { min-height: 0; overflow: hidden; }
+  .panel .plist { flex: 1; min-height: 0; overflow: hidden; align-content: start; }
+  .plist { grid-template-columns: minmax(0, 1fr); }
+  .item { min-width: 0; }
+  .panel .chart { flex: 1; min-height: 0; }
+  .funnel { align-content: center; flex: 1; }
+  @media (max-width: 1250px) {
+    .kpis { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .6rem; }
+    .kpi.hero { grid-column: auto; }
+    .kpi { padding: .7rem .8rem; }
+    .kpi .k-value, .kpi.hero .k-value { font-size: 1.5rem; }
+    .kpi .k-label { font-size: .78rem; }
+  }
+  @media (max-height: 760px) and (min-width: 901px) {
+    .dash { gap: .6rem; }
+    .dhead h1 { font-size: 1.3rem; }
+    .kpi { padding: .6rem .8rem; gap: .1rem; }
+    .kpi .k-value { font-size: 1.5rem; }
+    .kpi.hero .k-value { font-size: 1.9rem; }
+    .panel { padding: .7rem .8rem; gap: .45rem; }
+    .plist .item { padding: .4rem .6rem; }
+  }
+
+  /* customer card in tabs */
+  .cust { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: .6rem; }
+  .c-head { flex: none; display: flex; align-items: center; justify-content: space-between; gap: .6rem; }
+  .c-head h2 { font-size: 1.3rem; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .c-actions { flex: none; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .4rem; }
+  .act { display: flex; flex-direction: column; align-items: center; gap: .15rem; padding: .5rem .2rem; border-radius: 12px; border: 1px solid var(--line);
+    background: var(--navy-deep); color: var(--cream); text-decoration: none; cursor: pointer; font-size: .78rem; font-weight: 700; transition: background .15s, transform .1s; }
+  .act i { font-style: normal; font-size: 1.15rem; line-height: 1.2; }
+  .act span { white-space: nowrap; }
+  .act:hover { background: #0e2747; }
+  .act:active { transform: scale(.95); }
+  .act.green { background: #1f8f5f; border-color: #1f8f5f; }
+  .act.primary { background: var(--red); border-color: var(--red); }
+  .c-tabs { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; display: flex; flex: none; }
+  .c-tabs button { flex: 1; border: 0; background: none; padding: .6rem .2rem .5rem; font-size: .88rem; font-weight: 700; color: var(--muted); cursor: pointer;
+    border-bottom: 2px solid transparent; }
+  .c-tabs button.on { color: var(--cream); border-bottom-color: var(--red); background: rgba(247,241,227,.04); }
+  .c-tabs em { font-style: normal; display: inline-grid; place-items: center; min-width: 1.15rem; height: 1.15rem; padding: 0 .25rem; margin-inline-start: .3rem;
+    border-radius: 999px; background: rgba(247,241,227,.14); font-size: .7rem; }
+  .c-pane { display: none; flex: 1; min-height: 0; flex-direction: column; gap: .5rem; }
+  .c-pane.on { display: flex; }
+  .c-pane .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; }
+  .c-pane .facts div { display: flex; flex-direction: column; gap: .1rem; padding: .5rem .7rem; border-radius: 10px; background: var(--navy-deep); font-size: .78rem; min-width: 0; }
+  .c-pane .facts b { font-size: .95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .c-notes { font-size: .88rem; color: var(--ink-2); padding: .6rem .7rem; border-radius: 10px; background: var(--navy-deep); white-space: pre-wrap;
+    display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+  .timeline { display: flex; }
+  .timeline > .item { flex-direction: column; align-items: stretch; gap: .1rem; padding: .45rem .7rem; border-inline-start: 3px solid var(--red); cursor: default; }
+  .timeline .t { font-size: .88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .timeline small { color: var(--muted); font-size: .72rem; }
+  @media (max-width: 560px) {
+    .c-actions { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .act { padding: .4rem .1rem; font-size: .72rem; }
+    .c-head h2 { font-size: 1.15rem; }
+  }
+
+  /* forms: the notes box takes the room that's left instead of pushing the page longer */
+  #cf, #of, #sf { display: flex; flex-direction: column; overflow: hidden; }
+  #cf textarea, #of textarea { flex: 1; min-height: 2.6rem; resize: none; }
+  @media (max-height: 700px) {
+    .form .lbl { margin-top: .35rem; margin-bottom: .2rem; }
+    .picked { padding: .45rem .7rem; }
+    .picked .hint { display: none; }
+    .picked .btn { padding: .4rem .7rem; }
+    .field, textarea { padding: .5rem .7rem; }
+  }
+  .picker { position: relative; display: flex; gap: .5rem; }
+  .picker .search { flex: 1; }
+  .dropdown { position: absolute; z-index: 5; top: calc(100% + .3rem); inset-inline: 0; display: grid; gap: .3rem; padding: .3rem; border-radius: 12px;
+    background: var(--panel); border: 1px solid var(--line); box-shadow: 0 12px 30px rgba(0,0,0,.45); }
+  .dropdown:empty { display: none; }
+  .dropdown .hint { padding: .5rem; }
 </style>
 </head>
 <body class="authed">
@@ -460,11 +554,11 @@
         <div class="kpis" id="kpis"></div>
         <div class="dgrid">
           <section class="panel p-calls">
-            <div class="ph"><h3>שיחות להיום</h3><a href="#/callbacks">לכל הרשימה ←</a></div>
+            <div class="ph"><h3>שיחות להיום</h3><a href="#/callbacks" id="dCallsLink">לכל הרשימה ←</a></div>
             <div class="plist" id="dCalls"></div>
           </section>
           <section class="panel p-leads">
-            <div class="ph"><h3>לידים חדשים</h3><a href="#/leads">לכל הלידים ←</a></div>
+            <div class="ph"><h3>לידים חדשים</h3><a href="#/leads" id="dLeadsLink">לכל הלידים ←</a></div>
             <div class="plist" id="dLeads"></div>
           </section>
           <section class="panel p-chart">
@@ -476,8 +570,8 @@
             <div class="funnel" id="dFunnel"></div>
           </section>
           <section class="panel p-installs">
-            <div class="ph"><h3>התקנות ב-14 הימים הקרובים</h3><a href="#/orders">לכל ההזמנות ←</a></div>
-            <div class="inst-grid" id="dInstalls"></div>
+            <div class="ph"><h3>התקנות קרובות</h3><a href="#/orders" id="dInstallsLink">לכל ההזמנות ←</a></div>
+            <div class="plist" id="dInstalls"></div>
           </section>
         </div>
       </div>
@@ -488,19 +582,21 @@
       <div class="vhead"><h2>הזמנות</h2>
         <div class="seg mini" id="ordFilter"><button type="button" data-f="open" class="on">פתוחות</button><button type="button" data-f="all">הכל</button></div>
       </div>
-      <div class="scroll list" id="ordBody"></div>
+      <div class="pagebox list" id="ordBody"></div>
+      <div class="pager" id="ordPager" hidden></div>
     </section>
 
     <!-- leads / callbacks / search results share one list screen -->
     <section class="view" data-view="list">
       <div class="vhead"><h2 id="listTitle"></h2><span class="count" id="listCount"></span></div>
       <form class="search" id="listSearch"><input type="search" id="listQ" placeholder="חיפוש"></form>
-      <div class="scroll list" id="listBody"></div>
+      <div class="pagebox list" id="listBody"></div>
+      <div class="pager" id="listPager" hidden></div>
     </section>
 
     <!-- customer card -->
     <section class="view" data-view="customer">
-      <div class="scroll" id="custBody"></div>
+      <div class="cust" id="custBody"></div>
     </section>
 
     <!-- new / edit customer -->
@@ -571,10 +667,9 @@
       <form class="scroll form" id="sf">
         <div class="profile">
           <span class="avatar big" data-initial></span>
-          <div><b data-agent-name></b><div class="hint">שם משתמש: <span id="sfUser" dir="ltr"></span> · <span id="sfRole"></span></div></div>
+          <div><b data-agent-name></b><div class="hint" data-agent-role></div></div>
         </div>
-        <p class="hint" id="sfFirst" hidden>לפני שמתחילים – איך קוראים לך? השם יופיע על כל לקוח והזמנה שתפתח.</p>
-        <label class="lbl req" for="sfName">שם הסוכן</label>
+        <label class="lbl req" for="sfName">שם מלא</label>
         <input class="field" id="sfName" name="name" required autocomplete="name">
         <div class="two">
           <div><label class="lbl" for="sfPhone">טלפון</label><input class="field" id="sfPhone" name="phone" type="tel" autocomplete="tel"></div>

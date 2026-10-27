@@ -35,7 +35,7 @@ window.Studio = (() => {
     // the visualizer and forms sit in the plain block; the dashboard draws its own cards
     document.querySelector(".app-main .block").classList.toggle("bare", name === "home");
     const a = agent();
-    for (const el of document.querySelectorAll("[data-agent-name]")) el.textContent = a.name || "פרופיל חדש";
+    for (const el of document.querySelectorAll("[data-agent-name]")) el.textContent = a.name || "הפרופיל שלי";
     for (const el of document.querySelectorAll("[data-agent-role]")) el.textContent = a.role || "סוכן מכירות";
     for (const el of document.querySelectorAll("[data-initial]")) el.textContent = (a.name || "?").trim().charAt(0);
   }
@@ -72,7 +72,6 @@ window.Studio = (() => {
       document.body.innerHTML = `<p style="padding:2rem;text-align:center">לא הצלחתי להתחבר לשרת: ${esc(e.message)}</p>`;
       return;
     }
-    if (!me.name && !location.hash.startsWith("#/settings")) location.hash = "#/settings";
     render();
   }
   const setMe = (m) => { me = m; };
@@ -144,5 +143,58 @@ window.Studio = (() => {
     applySize(el, [w, h]);
   }
 
-  return { $, store, api, crm, agent, setMe, start, route, go, render, toast, esc, waNumber, fmtDate, ago, localInput, sizeTo, setCounts };
+  /* ---------- no scrolling anywhere: rows that don't fit are hidden or paged ---------- */
+  // Hide the rows (.item) that don't fit inside box; returns how many were hidden.
+  function fitRows(box) {
+    const items = [...box.querySelectorAll(":scope > .item")];
+    for (const it of items) it.hidden = false;
+    const bottom = box.getBoundingClientRect().bottom + 0.5;
+    let hidden = 0;
+    for (const it of items) if (hidden || it.getBoundingClientRect().bottom > bottom) { it.hidden = true; hidden++; }
+    return hidden;
+  }
+
+  // Show nodes in box a page at a time - as many rows as fit - with ‹ › controls in pager.
+  const pages = new WeakMap();
+  function paginate(box, nodes, pager, empty = "") {
+    pages.set(box, { nodes, pager, page: 0, empty });
+    layoutPage(box);
+    if (!box.dataset.paged) {
+      box.dataset.paged = "1";
+      let h = 0;
+      new ResizeObserver(() => { if (Math.abs(box.clientHeight - h) > 4) { h = box.clientHeight; layoutPage(box); } }).observe(box);
+      pager.addEventListener("click", (e) => {
+        const b = e.target.closest("button");
+        const st = pages.get(box);
+        if (!b || !st) return;
+        st.page += b.dataset.dir === "next" ? 1 : -1;
+        layoutPage(box);
+      });
+    }
+  }
+  function layoutPage(box) {
+    const st = pages.get(box);
+    if (!st || !box.clientHeight) return;
+    const { nodes, pager } = st;
+    if (!nodes.length) {
+      box.innerHTML = st.empty ? `<div class="none">${st.empty}</div>` : "";
+      pager.hidden = true;
+      return;
+    }
+    box.replaceChildren(...nodes);
+    for (const n of nodes) n.hidden = false;
+    // rows are the same height, so measure one and divide
+    const gap = parseFloat(getComputedStyle(box).rowGap) || 0;
+    const rowH = nodes[0].getBoundingClientRect().height + gap;
+    const per = Math.max(1, Math.floor((box.clientHeight + gap) / rowH));
+    const count = Math.ceil(nodes.length / per);
+    st.page = Math.min(Math.max(0, st.page), count - 1);
+    nodes.forEach((n, i) => { n.hidden = Math.floor(i / per) !== st.page; });
+    pager.hidden = count < 2;
+    pager.innerHTML = `<button type="button" data-dir="prev" ${st.page === 0 ? "disabled" : ""}>› הקודם</button>
+      <span>${st.page + 1} / ${count}</span>
+      <button type="button" data-dir="next" ${st.page === count - 1 ? "disabled" : ""}>הבא ‹</button>`;
+  }
+
+  return { $, store, api, crm, agent, setMe, start, fitRows, paginate, route, go, render, toast, esc, waNumber, fmtDate, ago, localInput, sizeTo, setCounts };
 })();
