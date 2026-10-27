@@ -1,6 +1,6 @@
 // Sales agents' CRM for /studio: customers, leads, call-backs and orders.
 // POST { password, agent, action, ...args } → JSON.
-const { passwordOk } = require("./_auth");
+const { allowed, currentEmployee, PUBLIC_FIELDS } = require("./_auth");
 const { query, ensureSchema } = require("./_db");
 
 const CUSTOMER_STATUS = ["new", "follow_up", "customer", "closed"];
@@ -36,6 +36,23 @@ async function claim(customerId, agent) {
 }
 
 const actions = {
+  // The signed-in employee's profile.
+  async me(_, __, me) {
+    return me;
+  },
+
+  async updateMe({ profile = {} }, oldName, me) {
+    const name = str(profile.name, 80);
+    if (!name) throw new BadRequest("חסר שם");
+    const [row] = await query(`UPDATE employees SET name=$1, phone=$2, email=$3 WHERE id=$4 RETURNING ${PUBLIC_FIELDS}`,
+      [name, str(profile.phone, 40), str(profile.email, 200), me.id]);
+    // Records are tagged with the employee's name, so a rename carries their customers and orders along.
+    if (oldName && oldName !== name) {
+      for (const t of ["customers", "orders", "activity"]) await query(`UPDATE ${t} SET agent = $1 WHERE agent = $2`, [name, oldName]);
+    }
+    return row;
+  },
+
   // Everything the sales dashboard shows. mine=true limits it to this agent's customers and orders.
   async dashboard({ mine, tz }, agent) {
     const z = tzOf(tz);
@@ -206,14 +223,15 @@ const actions = {
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
   const body = req.body || {};
-  if (!process.env.STUDIO_PASSWORD) return res.status(500).json({ error: "STUDIO_PASSWORD is not set on the server" });
-  if (!passwordOk(body.password)) return res.status(401).json({ error: "סיסמה שגויה" });
+  if (!allowed(body)) return res.status(401).json({ error: "אין הרשאה" });
 
   const fn = actions[body.action];
   if (!fn) return res.status(400).json({ error: "פעולה לא מוכרת" });
   try {
     await ensureSchema();
-    res.json(await fn(body, str(body.agent, 80)));
+    // Everything is recorded under the signed-in employee, never a name sent by the browser.
+    const me = await currentEmployee();
+    res.json(await fn(body, me.name || me.username, me));
   } catch (e) {
     if (e instanceof BadRequest) return res.status(400).json({ error: e.message });
     console.error(e);

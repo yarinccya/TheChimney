@@ -1,10 +1,10 @@
 // Private chimney visualizer backend (used only by /studio).
 // Env vars (set in Vercel → Project → Settings → Environment Variables):
-//   STUDIO_PASSWORD  - the password for /studio (required)
+//   STUDIO_PASSWORD  - the shared password, only used when api/_auth.js OPEN_ACCESS is false
 //   GEMINI_API_KEY   - Google AI Studio key (required)
 //   GEMINI_MODEL     - optional, defaults to Nano Banana Pro
 const sharp = require("sharp");
-const { passwordOk } = require("./_auth");
+const { allowed } = require("./_auth");
 
 const MODEL = process.env.GEMINI_MODEL || "gemini-3-pro-image";
 const ASPECTS = ["1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9"];
@@ -81,9 +81,7 @@ module.exports = async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
   const body = req.body || {};
 
-  if (!process.env.STUDIO_PASSWORD) return res.status(500).json({ error: "STUDIO_PASSWORD is not set on the server" });
-  if (!passwordOk(body.password)) return res.status(401).json({ error: "סיסמה שגויה" });
-  if (body.action === "login") return res.json({ ok: true });
+  if (!allowed(body)) return res.status(401).json({ error: "אין הרשאה" });
 
   if (!process.env.GEMINI_API_KEY) return res.status(500).json({ error: "GEMINI_API_KEY is not set on the server" });
 

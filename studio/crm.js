@@ -35,7 +35,7 @@
   // Menu badges on every screen; the dashboard fills them from its own data.
   let countsAt = 0;
   async function refreshCounts(force) {
-    if (!store.get("studioPw") || (!force && Date.now() - countsAt < 30000)) return;
+    if (!agent().id || (!force && Date.now() - countsAt < 30000)) return;
     countsAt = Date.now();
     try { Studio.setCounts(await crm("counts", { mine: mine(), tz: TZ })); } catch {}
   }
@@ -593,15 +593,17 @@
     $("sfName").value = a.name || "";
     $("sfPhone").value = a.phone || "";
     $("sfEmail").value = a.email || "";
+    $("sfUser").textContent = a.username || "";
+    $("sfRole").textContent = a.role || "";
   });
-  $("sf").addEventListener("submit", (e) => {
+  $("sf").addEventListener("submit", async (e) => {
     e.preventDefault();
-    store.set("studioAgent", JSON.stringify({ name: $("sfName").value.trim(), phone: $("sfPhone").value.trim(), email: $("sfEmail").value.trim() }));
-    toast("הפרטים נשמרו");
-    go("#/");
+    try {
+      Studio.setMe(await crm("updateMe", { profile: { name: $("sfName").value, phone: $("sfPhone").value, email: $("sfEmail").value } }));
+      toast("הפרטים נשמרו");
+      go("#/");
+    } catch (err) { toast(err.message, true); }
   });
-  $("sfLogout").addEventListener("click", () => $("logout").click());
 
-  Studio.render();
-  refreshCounts(true);
+  Studio.start().then(() => refreshCounts(true));
 })();

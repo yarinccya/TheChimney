@@ -1,4 +1,4 @@
-// Studio portal core: login, agent settings, screen routing and shared helpers.
+// Studio portal core: the signed-in employee, screen routing and shared helpers.
 // Screens are <section class="view" data-view="..."> blocks; the URL hash picks one (#/leads, #/customer/12 ...).
 window.Studio = (() => {
   const $ = (id) => document.getElementById(id);
@@ -7,18 +7,19 @@ window.Studio = (() => {
     set: (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} },
   };
 
-  let password = store.get("studioPw") || "";
-  const agent = () => { try { return JSON.parse(store.get("studioAgent")) || {}; } catch { return {}; } };
+  // The signed-in employee, loaded from the server on start (api/_auth.js decides who that is).
+  let me = null;
+  const agent = () => me || {};
 
   async function api(endpoint, body) {
     const r = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password, agent: agent().name || "", ...body }),
+      credentials: "same-origin",
+      body: JSON.stringify(body),
     });
     let data = {};
     try { data = await r.json(); } catch { data = { error: `שגיאת שרת (${r.status})` }; }
-    if (r.status === 401) logout();
     if (!r.ok) throw new Error(data.error || `שגיאה ${r.status}`);
     return data;
   }
@@ -31,11 +32,11 @@ window.Studio = (() => {
   function show(name, navKey = name) {
     for (const v of document.querySelectorAll(".view")) v.classList.toggle("on", v.dataset.view === name);
     for (const a of document.querySelectorAll("[data-nav]")) a.classList.toggle("on", a.dataset.nav === navKey);
-    document.body.classList.toggle("authed", name !== "login");
     // the visualizer and forms sit in the plain block; the dashboard draws its own cards
     document.querySelector(".app-main .block").classList.toggle("bare", name === "home");
     const a = agent();
-    for (const el of document.querySelectorAll("[data-agent-name]")) el.textContent = a.name || "סוכן";
+    for (const el of document.querySelectorAll("[data-agent-name]")) el.textContent = a.name || "פרופיל חדש";
+    for (const el of document.querySelectorAll("[data-agent-role]")) el.textContent = a.role || "סוכן מכירות";
     for (const el of document.querySelectorAll("[data-initial]")) el.textContent = (a.name || "?").trim().charAt(0);
   }
 
@@ -50,7 +51,7 @@ window.Studio = (() => {
   }
 
   function render() {
-    if (!password) return show("login");
+    if (!me) return;
     const [name = "home", ...params] = location.hash.replace(/^#\/?/, "").split("/").filter(Boolean);
     const r = routes[name] || routes.home;
     show(r.view, routes[name] ? name : "home");
@@ -58,28 +59,24 @@ window.Studio = (() => {
   }
   window.addEventListener("hashchange", render);
 
-  /* ---------- login ---------- */
-  function logout() {
-    password = "";
-    store.set("studioPw", null);
-    show("login");
-  }
-
-  $("loginForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    $("loginErr").textContent = "";
-    password = $("pw").value;
+  /* ---------- start: load the signed-in employee, then the screen ---------- */
+  async function start() {
     try {
-      await api("/api/studio", { action: "login" });
-      store.set("studioPw", password);
-      $("pw").value = "";
-      if (!agent().name) go("#/settings"); else go("#/");
-    } catch (err) {
-      password = "";
-      $("loginErr").textContent = err.message;
+      me = await crm("me");
+      // Before profiles lived on the server, the name was kept in this browser - carry it over once.
+      const legacy = (() => { try { return JSON.parse(store.get("studioAgent")) || {}; } catch { return {}; } })();
+      if (!me.name && legacy.name) me = await crm("updateMe", { profile: legacy });
+      store.set("studioAgent", null);
+      store.set("studioPw", null);
+    } catch (e) {
+      document.body.innerHTML = `<p style="padding:2rem;text-align:center">לא הצלחתי להתחבר לשרת: ${esc(e.message)}</p>`;
+      return;
     }
-  });
-  $("logout").addEventListener("click", logout);
+    if (!me.name && !location.hash.startsWith("#/settings")) location.hash = "#/settings";
+    render();
+  }
+  const setMe = (m) => { me = m; };
+
   $("topSearch").addEventListener("submit", (e) => {
     e.preventDefault();
     const q = $("topQ").value.trim();
@@ -147,5 +144,5 @@ window.Studio = (() => {
     applySize(el, [w, h]);
   }
 
-  return { $, store, api, crm, agent, route, go, render, toast, esc, waNumber, fmtDate, ago, localInput, sizeTo, setCounts };
+  return { $, store, api, crm, agent, setMe, start, route, go, render, toast, esc, waNumber, fmtDate, ago, localInput, sizeTo, setCounts };
 })();

@@ -67,6 +67,18 @@ const SCHEMA = [
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
   )`,
   `CREATE INDEX IF NOT EXISTS activity_customer ON activity (customer_id, created_at)`,
+  // Sales employees. password_hash stays empty until personal logins exist (set by the manager site).
+  `CREATE TABLE IF NOT EXISTS employees (
+    id SERIAL PRIMARY KEY,
+    username TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL DEFAULT '',
+    name TEXT NOT NULL DEFAULT '',
+    role TEXT NOT NULL DEFAULT 'סוכן מכירות',
+    phone TEXT NOT NULL DEFAULT '',
+    email TEXT NOT NULL DEFAULT '',
+    active BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  )`,
 ];
 
 function ensureSchema() {
