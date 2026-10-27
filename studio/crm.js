@@ -19,10 +19,12 @@
   const compact = (v) => `₪${new Intl.NumberFormat("he-IL", { notation: "compact", maximumFractionDigits: 1 }).format(v || 0)}`;
   const mine = () => (store.get("studioMine") ?? "1") === "1" && !!agent().name;
 
+  // Two copies of the switch: the desktop dashboard and the phone one.
+  const scopes = document.querySelectorAll("[data-scope]");
   function setScope() {
-    for (const b of $("scope").children) b.classList.toggle("on", (b.dataset.mine === "1") === mine());
+    for (const sc of scopes) for (const b of sc.children) b.classList.toggle("on", (b.dataset.mine === "1") === mine());
   }
-  $("scope").addEventListener("click", (e) => {
+  for (const sc of scopes) sc.addEventListener("click", (e) => {
     const b = e.target.closest("button");
     if (!b) return;
     if (b.dataset.mine === "1" && !agent().name) return go("#/settings");
@@ -72,6 +74,17 @@
       ${tag}${when ? `<span class="when">${esc(when)}</span>` : ""}
       ${c.phone ? `<a class="callbtn" href="tel:${esc(c.phone)}" aria-label="התקשר ל${esc(c.name)}">${PHONE_ICON}</a>` : ""}`;
     el.addEventListener("click", (e) => { if (!e.target.closest(".callbtn")) go(`#/customer/${c.customer_id || c.id}`); });
+    return el;
+  }
+
+  function installItem(o) {
+    const dt = new Date(`${o.install_date}T12:00:00`);
+    const el = document.createElement("a");
+    el.className = "item";
+    el.href = `#/order/${o.customer_id}/${o.id}`;
+    el.innerHTML = `<span class="date-chip"><b>${dt.getDate()}</b><small>${dt.toLocaleDateString("he-IL", { weekday: "short" })}</small></span>
+      <div class="main"><div class="name">${esc(o.name)}</div><div class="sub">${esc([o.product || o.service, o.address].filter(Boolean).join(" · "))}</div></div>
+      <span class="when">${money(o.price)}</span>`;
     return el;
   }
 
@@ -154,6 +167,103 @@
     $("dConv").textContent = k.month_customers ? `סגירה החודש: ${Math.round((k.month_won / k.month_customers) * 100)}%` : "";
   }
 
+  /* ---------- phone dashboard: everything on one screen ---------- */
+  let mData = null, mTab = null;
+
+  function spark(weeks) {
+    const W = 104, H = 46, n = weeks.length, slot = W / n, bw = Math.min(8, slot - 3);
+    const max = Math.max(1, ...weeks.map((w) => w.revenue));
+    return `<svg viewBox="0 0 ${W} ${H}" direction="ltr">${weeks.map((w, i) => {
+      const h = Math.max(2, (w.revenue / max) * (H - 2)), x = i * slot + (slot - bw) / 2, y = H - h, r = Math.min(2, h / 2);
+      return `<path fill="${i === n - 1 ? "var(--bar-now)" : "var(--bar-past)"}" d="M${x},${H} V${y + r} Q${x},${y} ${x + r},${y} H${x + bw - r} Q${x + bw},${y} ${x + bw},${y + r} V${H} Z"/>`;
+    }).join("")}</svg>`;
+  }
+
+  // Show only the rows that fit the panel; the rest go behind "N more".
+  function fitList() {
+    const box = $("mList"), items = [...box.querySelectorAll(".item")];
+    for (const it of items) it.hidden = false;
+    const bottom = box.getBoundingClientRect().bottom - 6;
+    let hidden = 0;
+    for (const it of items) if (it.getBoundingClientRect().bottom > bottom) { it.hidden = true; hidden++; }
+    return hidden;
+  }
+
+  function renderMobileList() {
+    const d = mData, now = new Date();
+    const tabs = {
+      calls: {
+        rows: d.calls, href: "#/callbacks", empty: "אין שיחות להיום 🎉", total: d.kpis.calls_due,
+        make: (c) => {
+          const t = new Date(c.follow_up_at);
+          const tag = t < now ? '<span class="tag late">באיחור</span>'
+            : `<span class="tag today">${t.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" })}</span>`;
+          return miniItem(c, { tag, sub: [c.service, c.address].filter(Boolean).join(" · ") });
+        },
+      },
+      leads: {
+        rows: d.leads, href: "#/leads", empty: "אין לידים ממתינים", total: d.kpis.leads_new,
+        make: (c) => miniItem(c, { when: ago(c.created_at), sub: [c.service, SOURCE[c.source] || c.source].filter(Boolean).join(" · ") }),
+      },
+      installs: {
+        rows: d.installs, href: "#/orders", empty: "אין התקנות בשבועיים הקרובים", total: d.installs.length,
+        make: installItem,
+      },
+    };
+    for (const b of $("mTabs").children) {
+      const t = tabs[b.dataset.t];
+      b.classList.toggle("on", b.dataset.t === mTab);
+      b.setAttribute("aria-selected", b.dataset.t === mTab);
+      b.querySelector("em")?.remove();
+      if (t.total) b.insertAdjacentHTML("beforeend", `<em>${t.total}</em>`);
+    }
+    const t = tabs[mTab];
+    fill($("mList"), t.rows.map(t.make), t.empty);
+    const hidden = fitList() + Math.max(0, t.total - t.rows.length);
+    $("mMore").href = t.href;
+    $("mMore").textContent = t.rows.length ? (hidden ? `עוד ${hidden} ←` : "לכל הרשימה ←") : "";
+  }
+  $("mTabs").addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    if (!b || !mData) return;
+    mTab = b.dataset.t;
+    renderMobileList();
+  });
+  let mListH = 0;
+  new ResizeObserver(() => {
+    const h = $("mList").clientHeight;
+    if (mData && h && Math.abs(h - mListH) > 8) { mListH = h; renderMobileList(); }
+  }).observe($("mList"));
+
+  function renderMobile(d, hello) {
+    const k = d.kpis;
+    mData = d;
+    $("mHello").textContent = hello;
+    $("mRev").textContent = money(k.month_revenue) || "₪0";
+    let sub = `${k.month_orders} הזמנות`;
+    if (k.prev_month_to_date > 0) {
+      const p = Math.round(((k.month_revenue - k.prev_month_to_date) / k.prev_month_to_date) * 100);
+      sub = `<span class="delta ${p >= 0 ? "up" : "down"}">${p >= 0 ? "▲" : "▼"} ${Math.abs(p)}%</span> מהחודש שעבר · ${sub}`;
+    }
+    $("mRevSub").innerHTML = sub;
+    $("mSpark").innerHTML = spark(d.weeks);
+    const conv = k.month_customers ? `${Math.round((k.month_won / k.month_customers) * 100)}%` : "—";
+    const tiles = [
+      ["#/callbacks", k.calls_due, "שיחות היום", k.calls_overdue ? `<small class="bad">${k.calls_overdue} באיחור</small>` : '<small class="ok">בזמן</small>'],
+      ["#/leads", k.leads_new, "לידים", k.leads_today ? `<small class="warn">+${k.leads_today} היום</small>` : '<small class="ok">—</small>'],
+      ["#/orders", k.open_orders, "הזמנות פתוחות", `<small class="ok">${compact(k.open_value)}</small>`],
+      ["", conv, "סגירה החודש", `<small class="ok">${k.month_won}/${k.month_customers}</small>`],
+    ];
+    $("mKpis").innerHTML = tiles.map(([href, v, label, extra]) => href
+      ? `<a class="mk" href="${href}"><b>${v}</b><span>${label}</span>${extra}</a>`
+      : `<div class="mk"><b>${v}</b><span>${label}</span>${extra}</div>`).join("");
+    const n = Object.fromEntries(d.pipeline.map((p) => [p.status, p.n]));
+    $("mPipe").innerHTML = `<span>חדשים <b>${n.new || 0}</b></span><i>‹</i><span>בטיפול <b>${n.follow_up || 0}</b></span><i>‹</i>`
+      + `<span>לקוחות <b>${n.customer || 0}</b></span><i>·</i><span>לא רלוונטי <b>${n.closed || 0}</b></span>`;
+    if (!mTab) mTab = d.calls.length ? "calls" : d.leads.length ? "leads" : "installs";
+    renderMobileList();
+  }
+
   route("home", "home", async () => {
     const live = fresh();
     const name = agent().name;
@@ -182,17 +292,9 @@
 
       revenueChart(d.weeks);
       funnel(d.pipeline, k);
+      renderMobile(d, $("hello").textContent);
 
-      fill($("dInstalls"), d.installs.map((o) => {
-        const dt = new Date(`${o.install_date}T12:00:00`);
-        const el = document.createElement("a");
-        el.className = "item";
-        el.href = `#/order/${o.customer_id}/${o.id}`;
-        el.innerHTML = `<span class="date-chip"><b>${dt.getDate()}</b><small>${dt.toLocaleDateString("he-IL", { weekday: "short" })}</small></span>
-          <div class="main"><div class="name">${esc(o.name)}</div><div class="sub">${esc([o.product || o.service, o.address].filter(Boolean).join(" · "))}</div></div>
-          <span class="when">${money(o.price)}</span>`;
-        return el;
-      }), "אין התקנות מתוכננות בשבועיים הקרובים");
+      fill($("dInstalls"), d.installs.map(installItem), "אין התקנות מתוכננות בשבועיים הקרובים");
     } catch (e) {
       if (live()) toast(e.message, true);
     }
