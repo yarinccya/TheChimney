@@ -1,7 +1,8 @@
-// Sales agents' CRM for /studio: customers, leads, call-backs and orders.
+// Sales agents' CRM for /studio: leads (own module, see _leads.js), customers, call-backs and orders.
 // POST { password, agent, action, ...args } → JSON.
 const { allowed, currentEmployee, PUBLIC_FIELDS } = require("./_auth");
 const { query, ensureSchema } = require("./_db");
+const leadsSource = require("./_leads");
 
 const CUSTOMER_STATUS = ["new", "follow_up", "customer", "closed"];
 const ORDER_STATUS = ["new", "confirmed", "scheduled", "done", "cancelled"];
@@ -55,6 +56,7 @@ const actions = {
 
   // Everything the sales dashboard shows. mine=true limits it to this agent's customers and orders.
   async dashboard({ mine, tz }, agent) {
+    await leadsSource.sync();
     const z = tzOf(tz);
     const who = mine && agent ? agent : null; // $2: null = whole team
     const day = "date_trunc('day', now() AT TIME ZONE $1)";
@@ -62,8 +64,8 @@ const actions = {
     const local = (col) => `(${col} AT TIME ZONE $1)`;
 
     const [k] = await query(`SELECT
-      (SELECT count(*) FROM customers WHERE status = 'new')::int AS leads_new,
-      (SELECT count(*) FROM customers WHERE status = 'new' AND ${local("created_at")} >= ${day})::int AS leads_today,
+      (SELECT count(*) FROM leads WHERE status = 'new')::int AS leads_new,
+      (SELECT count(*) FROM leads WHERE status = 'new' AND ${local("received_at")} >= ${day})::int AS leads_today,
       (SELECT count(*) FROM customers WHERE status = 'follow_up' AND ($2::text IS NULL OR agent = $2)
          AND ${local("follow_up_at")} < ${day} + interval '1 day')::int AS calls_due,
       (SELECT count(*) FROM customers WHERE status = 'follow_up' AND ($2::text IS NULL OR agent = $2)
@@ -81,9 +83,8 @@ const actions = {
       (SELECT count(*) FROM customers WHERE ($2::text IS NULL OR agent = $2) AND ${local("created_at")} >= ${month}
          AND status = 'customer')::int AS month_won`, [z, who]);
 
-    // new leads are a shared pool, so they always count
     const pipeline = await query(`SELECT status, count(*)::int AS n FROM customers
-      WHERE ($1::text IS NULL OR agent = $1 OR status = 'new') GROUP BY status`, [who]);
+      WHERE ($1::text IS NULL OR agent = $1) GROUP BY status`, [who]);
 
     const weeks = await query(`SELECT to_char(w, 'YYYY-MM-DD') AS week,
         coalesce(sum(o.price), 0)::float AS revenue, count(o.id)::int AS orders
@@ -96,8 +97,8 @@ const actions = {
       WHERE status = 'follow_up' AND ($2::text IS NULL OR agent = $2) AND ${local("follow_up_at")} < ${day} + interval '1 day'
       ORDER BY follow_up_at LIMIT 15`, [z, who]);
 
-    const leads = await query(`SELECT id, name, phone, address, service, source, created_at FROM customers
-      WHERE status = 'new' ORDER BY created_at DESC LIMIT 15`);
+    const leads = await query(`SELECT id, name, phone, address, service, source, received_at AS created_at FROM leads
+      WHERE status = 'new' ORDER BY received_at DESC LIMIT 15`);
 
     const installs = await query(`SELECT o.id, o.customer_id, o.service, o.product, o.price, o.install_date::text AS install_date, o.status, c.name, c.address
       FROM orders o JOIN customers c ON c.id = o.customer_id
@@ -110,8 +111,9 @@ const actions = {
 
   // Menu badges: pending leads (shared pool) and calls due today.
   async counts({ mine, tz }, agent) {
+    await leadsSource.sync();
     const [r] = await query(`SELECT
-      (SELECT count(*) FROM customers WHERE status = 'new')::int AS leads,
+      (SELECT count(*) FROM leads WHERE status = 'new')::int AS leads,
       (SELECT count(*) FROM customers WHERE status = 'follow_up' AND ($2::text IS NULL OR agent = $2)
          AND (follow_up_at AT TIME ZONE $1) < date_trunc('day', now() AT TIME ZONE $1) + interval '1 day')::int AS calls`,
       [tzOf(tz), mine && agent ? agent : null]);
@@ -128,10 +130,56 @@ const actions = {
       ORDER BY o.install_date ASC NULLS LAST, o.created_at DESC LIMIT 200`, [open, who]);
   },
 
+  /* ----- leads ----- */
+  async leads({ filter, q }) {
+    await leadsSource.sync();
+    const where = [], params = [];
+    if (filter !== "all") where.push("status = 'new'");
+    const search = str(q, 80);
+    if (search) {
+      params.push(`%${search}%`);
+      where.push(`(name ILIKE $1 OR phone ILIKE $1 OR address ILIKE $1)`);
+    }
+    return query(`SELECT id, source, name, phone, address, service, status, handled_by, customer_id, received_at
+      FROM leads ${where.length ? "WHERE " + where.join(" AND ") : ""} ORDER BY received_at DESC LIMIT 300`, params);
+  },
+
+  async lead({ id: raw }) {
+    const [l] = await query("SELECT * FROM leads WHERE id = $1", [id(raw)]);
+    if (!l) throw new BadRequest("הליד לא נמצא");
+    return l;
+  },
+
+  // The only bridge between the modules: an agent turns a lead into a customer.
+  async convertLead({ id: raw }, agent) {
+    const lid = id(raw);
+    const [l] = await query("SELECT * FROM leads WHERE id = $1", [lid]);
+    if (!l) throw new BadRequest("הליד לא נמצא");
+    if (l.customer_id) return { customer_id: l.customer_id };
+    const [c] = await query(`INSERT INTO customers (name, phone, email, address, service, source, notes, status, agent)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,'new',$8) RETURNING id`,
+      [l.name || "ללא שם", l.phone, l.email, l.address, l.service, l.source, l.message, agent]);
+    await query("UPDATE leads SET status='converted', customer_id=$1, handled_by=$2, handled_at=now() WHERE id=$3", [c.id, agent, lid]);
+    await log(c.id, `נוצר מליד #${lid}`, agent);
+    return { customer_id: c.id };
+  },
+
+  async rejectLead({ id: raw, note }, agent) {
+    const rows = await query("UPDATE leads SET status='rejected', note=$1, handled_by=$2, handled_at=now() WHERE id=$3 AND status='new' RETURNING id",
+      [str(note, 500), agent, id(raw)]);
+    if (!rows.length) throw new BadRequest("הליד כבר טופל");
+    return { ok: true };
+  },
+
+  async reopenLead({ id: raw }) {
+    await query("UPDATE leads SET status='new', note='', handled_by='', handled_at=NULL WHERE id=$1 AND status='rejected'", [id(raw)]);
+    return { ok: true };
+  },
+
+  /* ----- customers ----- */
   async list({ filter, q }) {
     const where = [], params = [];
-    if (filter === "leads") where.push("status = 'new'");
-    else if (filter === "callbacks") where.push("status = 'follow_up'");
+    if (filter === "callbacks") where.push("status = 'follow_up'");
     const search = str(q, 80);
     if (search) {
       params.push(`%${search}%`);
@@ -179,7 +227,7 @@ const actions = {
     const rows = await query("UPDATE customers SET status=$1, follow_up_at=$2, updated_at=now() WHERE id=$3 RETURNING id", [status, when, cid]);
     if (!rows.length) throw new BadRequest("הלקוח לא נמצא");
     await claim(cid, agent);
-    const label ={ new: "הוחזר ללידים", follow_up: "לחזור ללקוח", customer: "סומן כלקוח", closed: "סומן כלא רלוונטי" }[status];
+    const label = { new: "סומן כלקוח חדש", follow_up: "לחזור ללקוח", customer: "סומן כלקוח", closed: "סומן כלא רלוונטי" }[status];
     const text = str(note, 1000);
     await log(cid, text ? `${label} – ${text}` : label, agent);
     return { ok: true };

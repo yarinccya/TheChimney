@@ -481,6 +481,9 @@
     background: var(--panel); border: 1px solid var(--line); box-shadow: 0 12px 30px rgba(0,0,0,.45); }
   .dropdown:empty { display: none; }
   .dropdown .hint { padding: .5rem; }
+  .lead-actions { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .pill.lead-new { background: #2b5aa8; } .pill.lead-converted { background: #1f8f5f; } .pill.lead-rejected { background: #555; }
+  .lead-hint { margin-top: auto; font-size: .8rem; }
 </style>
 </head>
 <body class="authed">
@@ -490,7 +493,7 @@
     <a class="side-logo" href="#/"><img src="/logo/logo-on-navy.svg" alt="Chimneystar"></a>
     <nav class="nav">
       <a data-nav="home" href="#/"><svg viewBox="0 0 24 24"><path d="M3 13h8V3H3zm0 8h8v-6H3zm10 0h8V11h-8zm0-18v6h8V3z"/></svg><span>דשבורד</span></a>
-      <a data-nav="leads" href="#/leads"><svg viewBox="0 0 24 24"><path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm0 12h-4a3 3 0 0 1-6 0H5V5h14zm-3-5h-3V7h-2v3H8l4 4z"/></svg><span>לידים ממתינים</span><b class="nb" data-count="leads"></b></a>
+      <a data-nav="leads" href="#/leads"><svg viewBox="0 0 24 24"><path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm0 12h-4a3 3 0 0 1-6 0H5V5h14zm-3-5h-3V7h-2v3H8l4 4z"/></svg><span>לידים</span><b class="nb" data-count="leads"></b></a>
       <a data-nav="callbacks" href="#/callbacks"><svg viewBox="0 0 24 24"><path d="M6.6 10.8a15 15 0 0 0 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1A17 17 0 0 1 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1zM18 2v2.1A6 6 0 0 1 22 10h-2a4 4 0 0 0-2-3.4V9l-4-3.5z"/></svg><span>לחזור ללקוחות</span><b class="nb" data-count="calls"></b></a>
       <a data-nav="orders" href="#/orders"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zm-1 7V3.5L18.5 9zM8 13h8v2H8zm0 4h5v2H8z"/></svg><span>הזמנות</span></a>
       <a data-nav="customers" href="#/customers"><svg viewBox="0 0 24 24"><path d="M16 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-8 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 2c-2.7 0-8 1.3-8 4v3h16v-3c0-2.7-5.3-4-8-4zm8 0c-.3 0-.7 0-1.1.1 1.2.9 2.1 2.1 2.1 3.9v3h7v-3c0-2.7-5.3-4-8-4z"/></svg><span>כל הלקוחות</span></a>
@@ -587,6 +590,20 @@
     </section>
 
     <!-- leads / callbacks / search results share one list screen -->
+    <!-- leads: own module, fed by the leads system -->
+    <section class="view" data-view="leads">
+      <div class="vhead"><h2>לידים <span class="count" id="leadsCount"></span></h2>
+        <div class="seg mini" id="leadFilter"><button type="button" data-f="new" class="on">ממתינים</button><button type="button" data-f="all">הכל</button></div>
+      </div>
+      <form class="search" id="leadsSearch"><input type="search" id="leadsQ" placeholder="חיפוש ליד"></form>
+      <div class="pagebox list" id="leadsBody"></div>
+      <div class="pager" id="leadsPager" hidden></div>
+    </section>
+
+    <section class="view" data-view="lead">
+      <div class="cust" id="leadBody"></div>
+    </section>
+
     <section class="view" data-view="list">
       <div class="vhead"><h2 id="listTitle"></h2><span class="count" id="listCount"></span></div>
       <form class="search" id="listSearch"><input type="search" id="listQ" placeholder="חיפוש"></form>

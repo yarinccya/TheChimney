@@ -1,6 +1,7 @@
-// Public endpoint for the website's lead form (lead.html). Saves the lead as a new
-// customer with status "new", so it shows up under "pending leads" in /studio.
+// Public endpoint for the website's lead form (lead.html). Saves it in the leads module
+// (not as a customer), so it shows up under "leads" in /studio.
 const { query, ensureSchema, NoDatabase } = require("./_db");
+const { addLead } = require("./_leads");
 
 const str = (v, max) => (typeof v === "string" ? v.trim().slice(0, max) : "");
 
@@ -25,10 +26,8 @@ module.exports = async function handler(req, res) {
 
   try {
     await ensureSchema();
-    const [row] = await query(`INSERT INTO customers (name, phone, email, address, service, source, notes, status)
-      VALUES ($1,$2,$3,$4,$5,'website',$6,'new') RETURNING id`,
-      [name, phone, str(b.email, 200), str(b.location, 200), str(b.serviceLabel || b.service, 120), str(b.message, 3000)]);
-    await query("INSERT INTO activity (customer_id, text) VALUES ($1, $2)", [row.id, "ליד חדש מהאתר"]);
+    await addLead({ source: "website", name, phone, email: str(b.email, 200), address: str(b.location, 200),
+      service: str(b.serviceLabel || b.service, 120), message: str(b.message, 3000) });
     res.json({ ok: true });
   } catch (e) {
     console.error(e);

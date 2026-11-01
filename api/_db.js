@@ -67,6 +67,26 @@ const SCHEMA = [
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
   )`,
   `CREATE INDEX IF NOT EXISTS activity_customer ON activity (customer_id, created_at)`,
+  // Leads: a separate pool (website form today, an external leads system later). See api/_leads.js.
+  `CREATE TABLE IF NOT EXISTS leads (
+    id SERIAL PRIMARY KEY,
+    source TEXT NOT NULL DEFAULT 'website',
+    external_id TEXT,
+    name TEXT NOT NULL DEFAULT '',
+    phone TEXT NOT NULL DEFAULT '',
+    email TEXT NOT NULL DEFAULT '',
+    address TEXT NOT NULL DEFAULT '',
+    service TEXT NOT NULL DEFAULT '',
+    message TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'new',
+    handled_by TEXT NOT NULL DEFAULT '',
+    handled_at TIMESTAMPTZ,
+    note TEXT NOT NULL DEFAULT '',
+    customer_id INTEGER REFERENCES customers(id) ON DELETE SET NULL,
+    received_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (source, external_id)
+  )`,
+  `CREATE INDEX IF NOT EXISTS leads_status ON leads (status, received_at)`,
   // Sales employees. password_hash stays empty until personal logins exist (set by the manager site).
   `CREATE TABLE IF NOT EXISTS employees (
     id SERIAL PRIMARY KEY,

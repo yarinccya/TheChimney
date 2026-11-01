@@ -1,10 +1,10 @@
-// Sales agents' screens: dashboard, leads, call-backs, customer card, customer and order forms, settings.
+// Sales agents' screens: dashboard, leads (own module), customers, call-backs, customer card, customer and order forms, settings.
 (() => {
   const { $, crm, go, route, toast, esc, waNumber, fmtDate, ago, localInput, agent, store, fitRows, paginate } = Studio;
 
-  const STATUS = { new: "ליד חדש", follow_up: "לחזור", customer: "לקוח", closed: "לא רלוונטי" };
+  const STATUS = { new: "לקוח חדש", follow_up: "לחזור", customer: "לקוח", closed: "לא רלוונטי" };
   const ORDER_STATUS = { new: "חדשה", confirmed: "אושרה", scheduled: "נקבעה התקנה", done: "בוצעה", cancelled: "בוטלה" };
-  const SOURCE = { phone: "טלפון", website: "אתר", referral: "המלצה", social: "רשתות חברתיות", field: "שטח", other: "אחר" };
+  const SOURCE = { "leads-api": "מערכת לידים", phone: "טלפון", website: "אתר", referral: "המלצה", social: "רשתות חברתיות", field: "שטח", other: "אחר" };
   const PHONE_ICON = '<svg viewBox="0 0 24 24"><path d="M6.6 10.8a15 15 0 0 0 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1A17 17 0 0 1 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1z"/></svg>';
 
   // Each screen render bumps this; a slow response for an old screen is dropped.
@@ -67,13 +67,13 @@
     ].join("");
   }
 
-  function miniItem(c, { when = "", tag = "", sub }) {
+  function miniItem(c, { when = "", tag = "", sub, href }) {
     const el = document.createElement("div");
     el.className = "item";
     el.innerHTML = `<div class="main"><div class="name">${esc(c.name)}</div><div class="sub">${esc(sub) || "&nbsp;"}</div></div>
       ${tag}${when ? `<span class="when">${esc(when)}</span>` : ""}
       ${c.phone ? `<a class="callbtn" href="tel:${esc(c.phone)}" aria-label="התקשר ל${esc(c.name)}">${PHONE_ICON}</a>` : ""}`;
-    el.addEventListener("click", (e) => { if (!e.target.closest(".callbtn")) go(`#/customer/${c.customer_id || c.id}`); });
+    el.addEventListener("click", (e) => { if (!e.target.closest(".callbtn")) go(href || `#/customer/${c.customer_id || c.id}`); });
     return el;
   }
 
@@ -175,7 +175,7 @@
 
   function funnel(pipeline, k) {
     const n = Object.fromEntries(pipeline.map((p) => [p.status, p.n]));
-    const rows = [["new", "לידים חדשים"], ["follow_up", "בטיפול"], ["customer", "לקוחות"], ["closed", "לא רלוונטי"]];
+    const rows = [["new", "לקוחות חדשים"], ["follow_up", "בטיפול"], ["customer", "לקוחות"], ["closed", "לא רלוונטי"]];
     const max = Math.max(1, ...rows.map(([s]) => n[s] || 0));
     $("dFunnel").innerHTML = rows.map(([s, label]) => {
       const v = n[s] || 0, pct = (v / max) * 82;
@@ -221,7 +221,7 @@
       },
       leads: {
         rows: d.leads, href: "#/leads", empty: "אין לידים ממתינים", total: d.kpis.leads_new,
-        make: (c) => miniItem(c, { when: ago(c.created_at), sub: [c.service, SOURCE[c.source] || c.source].filter(Boolean).join(" · ") }),
+        make: (c) => miniItem(c, { href: `#/lead/${c.id}`, when: ago(c.created_at), sub: [c.service, SOURCE[c.source] || c.source].filter(Boolean).join(" · ") }),
       },
       installs: {
         rows: d.installs, href: "#/orders", empty: "אין התקנות בשבועיים הקרובים", total: d.installs.length,
@@ -304,7 +304,7 @@
         return miniItem(c, { tag, sub: [c.service, c.address].filter(Boolean).join(" · ") });
       }), "אין שיחות להיום 🎉", k.calls_due, $("dCallsLink"), "לכל הרשימה ←");
 
-      panelList($("dLeads"), d.leads.map((c) => miniItem(c, {
+      panelList($("dLeads"), d.leads.map((c) => miniItem(c, { href: `#/lead/${c.id}`,
         when: ago(c.created_at), sub: [c.service, SOURCE[c.source] || c.source].filter(Boolean).join(" · "),
       })), "אין לידים ממתינים", k.leads_new, $("dLeadsLink"), "לכל הלידים ←");
 
@@ -348,6 +348,91 @@
     Studio.render();
   });
 
+  /* ---------- leads (own module) ---------- */
+  const LEAD_STATUS = { new: "ממתין", converted: "הפך ללקוח", rejected: "לא רלוונטי" };
+  let leadFilter = "new";
+
+  async function showLeads(q = "") {
+    const live = fresh();
+    for (const b of $("leadFilter").children) b.classList.toggle("on", b.dataset.f === leadFilter);
+    $("leadsQ").value = q;
+    $("leadsCount").textContent = "";
+    $("leadsBody").innerHTML = '<div class="none">טוען…</div>';
+    $("leadsPager").hidden = true;
+    try {
+      const rows = await crm("leads", { filter: leadFilter, q });
+      if (!live()) return;
+      $("leadsCount").textContent = rows.length ? `${rows.length}` : "";
+      paginate($("leadsBody"), rows.map((l) => {
+        const el = document.createElement("div");
+        el.className = "item";
+        const sub = [l.service, l.address, SOURCE[l.source] || l.source].filter(Boolean).join(" · ");
+        el.innerHTML = `<div class="main"><div class="name">${esc(l.name)}</div><div class="sub">${esc(sub) || "&nbsp;"}</div></div>
+          ${l.status === "new" ? `<span class="when">${esc(ago(l.received_at))}</span>` : `<span class="pill lead-${l.status}">${LEAD_STATUS[l.status]}</span>`}
+          ${l.phone ? `<a class="callbtn" href="tel:${esc(l.phone)}" aria-label="התקשר">${PHONE_ICON}</a>` : ""}`;
+        el.addEventListener("click", (e) => { if (!e.target.closest(".callbtn")) go(`#/lead/${l.id}`); });
+        return el;
+      }), $("leadsPager"), q ? "לא נמצאו לידים" : leadFilter === "new" ? "אין לידים ממתינים 🎉" : "אין לידים עדיין");
+    } catch (e) {
+      if (live()) $("leadsBody").innerHTML = `<div class="none">${esc(e.message)}</div>`;
+    }
+  }
+  route("leads", "leads", () => showLeads());
+  $("leadFilter").addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    if (!b) return;
+    leadFilter = b.dataset.f;
+    showLeads($("leadsQ").value.trim());
+  });
+  $("leadsSearch").addEventListener("submit", (e) => { e.preventDefault(); showLeads($("leadsQ").value.trim()); });
+
+  route("lead", "lead", async (id) => {
+    const live = fresh();
+    $("leadBody").innerHTML = '<div class="none">טוען…</div>';
+    try {
+      const l = await crm("lead", { id });
+      if (!live()) return;
+      const facts = [["טלפון", l.phone], ["אימייל", l.email], ["כתובת", l.address], ["שירות מבוקש", l.service],
+        ["מקור", SOURCE[l.source] || l.source], ["התקבל", fmtDate(l.received_at)],
+        ["טופל", l.handled_by ? `${l.handled_by} · ${fmtDate(l.handled_at)}` : ""]].filter(([, v]) => v);
+      const open = l.status === "new";
+      $("leadBody").innerHTML = `
+        <div class="c-head"><h2>${esc(l.name || "ליד ללא שם")}</h2><span class="pill lead-${l.status}">ליד · ${LEAD_STATUS[l.status]}</span></div>
+        <div class="c-actions lead-actions">
+          <a class="act green" href="tel:${esc(l.phone)}"><i>📞</i><span>התקשר</span></a>
+          <a class="act" href="https://wa.me/${waNumber(l.phone)}" target="_blank" rel="noopener"><i>💬</i><span>וואטסאפ</span></a>
+          ${l.customer_id ? `<a class="act primary" href="#/customer/${l.customer_id}"><i>👤</i><span>לכרטיס הלקוח</span></a>`
+            : open ? `<button class="act primary" type="button" id="lConvert"><i>👤</i><span>הפוך ללקוח</span></button>` : ""}
+          ${open ? `<button class="act" type="button" id="lReject"><i>✖</i><span>לא רלוונטי</span></button>`
+            : l.status === "rejected" ? `<button class="act" type="button" id="lReopen"><i>↩</i><span>החזר לממתינים</span></button>` : ""}
+        </div>
+        <div class="c-pane on">
+          <div class="facts">${facts.map(([k, v]) => `<div>${k}<b>${esc(v)}</b></div>`).join("")}</div>
+          ${l.message ? `<p class="c-notes" title="${esc(l.message)}">${esc(l.message)}</p>` : ""}
+          ${l.note ? `<p class="hint">סיבה: ${esc(l.note)}</p>` : ""}
+          <p class="hint lead-hint">ליד הוא פנייה ממערכת הלידים. הוא הופך ללקוח רק כשלוחצים "הפוך ללקוח".</p>
+        </div>`;
+      $("lConvert")?.addEventListener("click", async () => {
+        try {
+          const { customer_id } = await crm("convertLead", { id: l.id });
+          toast("הליד הפך ללקוח");
+          refreshCounts(true);
+          go(`#/customer/${customer_id}`);
+        } catch (e) { toast(e.message, true); }
+      });
+      $("lReject")?.addEventListener("click", async () => {
+        const note = prompt("למה הליד לא רלוונטי? (לא חובה)");
+        if (note === null) return;
+        try { await crm("rejectLead", { id: l.id, note }); toast("סומן כלא רלוונטי"); refreshCounts(true); go("#/leads"); } catch (e) { toast(e.message, true); }
+      });
+      $("lReopen")?.addEventListener("click", async () => {
+        try { await crm("reopenLead", { id: l.id }); toast("הליד הוחזר לממתינים"); refreshCounts(true); Studio.render(); } catch (e) { toast(e.message, true); }
+      });
+    } catch (e) {
+      if (live()) $("leadBody").innerHTML = `<div class="none">${esc(e.message)}</div>`;
+    }
+  });
+
   /* ---------- lists ---------- */
   let listFilter = "";
   function item(c, filter) {
@@ -361,7 +446,7 @@
     } else {
       when = ago(c.created_at);
     }
-    const sub = [c.service, c.address, filter === "leads" && c.source ? SOURCE[c.source] || c.source : "", filter === "" ? STATUS[c.status] : ""].filter(Boolean).join(" · ");
+    const sub = [c.service, c.address, filter === "" ? STATUS[c.status] : ""].filter(Boolean).join(" · ");
     el.innerHTML = `<div class="main"><div class="name">${esc(c.name)}</div><div class="sub">${esc(sub) || "&nbsp;"}</div></div>
       <span class="when ${cls}">${esc(when)}</span>
       ${c.phone ? `<a class="callbtn" href="tel:${esc(c.phone)}" aria-label="התקשר">${PHONE_ICON}</a>` : ""}`;
@@ -382,12 +467,11 @@
       if (!live()) return;
       $("listCount").textContent = rows.length ? `${rows.length}` : "";
       paginate($("listBody"), rows.map((c) => item(c, filter)), $("listPager"),
-        q ? "לא נמצאו לקוחות" : filter === "leads" ? "אין לידים ממתינים 🎉" : filter === "callbacks" ? "אין לקוחות לחזור אליהם" : "אין לקוחות עדיין");
+        q ? "לא נמצאו לקוחות" : filter === "callbacks" ? "אין לקוחות לחזור אליהם" : "אין לקוחות עדיין");
     } catch (e) {
       if (live()) $("listBody").innerHTML = `<div class="none">${esc(e.message)}</div>`;
     }
   }
-  route("leads", "list", () => showList("leads", "לידים ממתינים"));
   route("callbacks", "list", () => showList("callbacks", "לקוחות לחזור אליהם"));
   route("customers", "list", (q = "") => showList("", q ? `חיפוש: ${q}` : "כל הלקוחות", q));
   $("listSearch").addEventListener("submit", (e) => {
