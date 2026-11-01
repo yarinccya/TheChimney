@@ -89,6 +89,9 @@
   .steps li.done button { background: var(--navy); color: var(--cream); border-bottom-color: var(--cream); }
   .steps li.on button { background: var(--red); color: var(--cream); border-bottom-color: var(--red-dark); }
   .steps li.on button::before { display: none; }
+  /* while a clip plays the other services can't be picked */
+  .steps.busy button { pointer-events: none; }
+  .steps.busy li:not(.on) button { opacity: .6; box-shadow: none; }
 
   .copy { position: absolute; left: clamp(1.25rem, 4vw, 3.5rem); right: clamp(1.25rem, 4vw, 3.5rem);
     top: 50%; transform: translateY(-50%); padding-top: 3rem; z-index: 3; max-width: 64rem; margin: 0 auto; text-align: center; }
@@ -156,7 +159,7 @@
     </div>
     <div class="actions" id="actions">
       <a class="btn" id="quote" href="lead.html" hidden>Get a free estimate</a>
-      <button id="next" type="button" disabled>Loading…</button>
+      <button id="next" type="button">See how we work</button>
       <a class="btn ghost" id="call" href="tel:+15555550123" hidden>Call now</a>
     </div>
   </main>
@@ -299,7 +302,6 @@
   let step = 0;              // clip the main button plays next
   let playing = -1;          // clip currently playing
   let run = 0;               // bumps on every action so older animations stop
-  let wanted = -1;           // clip asked for by the URL (#install / #clean / #replace) before it finished loading
   const loaded = SEQS.map(() => false);
   const blobs = SEQS.map(() => []);    // compressed frames
   const frames = SEQS.map(() => []);   // <img> fallback
@@ -420,9 +422,19 @@
       })));
     }
     loaded[k] = true; refreshUI(); if (k === step) warm(k);
-    if (k === wanted) { wanted = -1; go(k, false); }
+    readyRes[k]();
   }
-  (async () => { for (let k = 0; k < SEQS.length; k++) await loadSeq(k); })();
+  // Clips load one after another; a clip someone has already clicked jumps to the front of the queue.
+  const readyRes = [], ready = SEQS.map((_, k) => new Promise(r => { readyRes[k] = r; }));
+  let first = -1;
+  (async () => {
+    const started = new Set();
+    while (started.size < SEQS.length) {
+      const k = first >= 0 && !started.has(first) ? first : SEQS.findIndex((_, j) => !started.has(j));
+      started.add(k);
+      await loadSeq(k);
+    }
+  })();
 
   /* ---------- UI ---------- */
   function setText(t, l) { titleEl.textContent = t; leadEl.textContent = l; }
@@ -434,13 +446,8 @@
       if (k === active) b.setAttribute("aria-current", "true"); else b.removeAttribute("aria-current");
     });
   }
-  function refreshUI() {
-    stepLis.forEach(li => { li.firstElementChild.disabled = !loaded[+li.dataset.k]; });
-    if (step < SEQS.length) {
-      const ready = loaded[step];
-      nextBtn.disabled = !ready;
-      nextBtn.textContent = ready ? (step === 0 ? "See how we work" : SEQS[step].label) : "Loading\u2026";
-    }
+  function refreshUI() {   // the buttons never show a loading state: a click on a clip still loading plays it once it is in
+    if (step < SEQS.length) nextBtn.textContent = step === 0 ? "See how we work" : SEQS[step].label;
   }
   function setButtons(k) { // k = clip on screen, -1 = start picture
     const atEnd = k === SEQS.length - 1;
@@ -456,23 +463,33 @@
   }
 
   /* ---------- actions ---------- */
+  // From a click until that clip has finished, the other buttons do nothing (and look it).
+  let locked = false;
+  const stepsEl = stepLis[0].parentElement;
   async function go(k, viaButton) {
-    if (!loaded[k]) return;
-    const id = ++run, seq = SEQS[k], from = snapshot();
+    if (locked) return;
+    locked = true; stepsEl.classList.add("busy");
     actions.classList.add("hide"); textEl.classList.add("out");
     markSteps(k);
-    stepLis[0].parentElement.classList.add("used");   // the visitor found the services: stop the attention rings
-    // TEXT_DELAY ms after the click the clip's text and buttons come in over the footage while it keeps playing.
-    setTimeout(() => {
-      if (id !== run) return;
-      step = k + 1;
-      setText(seq.title, seq.lead);
-      setButtons(k); refreshUI();
-      reveal(viaButton ? quoteBtn : null);
-    }, TEXT_DELAY);
-    if (await play(k, id, from) && step < SEQS.length) warm(step);
+    stepsEl.classList.add("used");   // the visitor found the services: stop the attention rings
+    try {
+      if (!loaded[k]) { first = k; await ready[k]; }
+      const id = ++run, seq = SEQS[k], from = snapshot();
+      // TEXT_DELAY ms after the clip starts, its text and buttons come in over the footage while it keeps playing.
+      setTimeout(() => {
+        if (id !== run) return;
+        step = k + 1;
+        setText(seq.title, seq.lead);
+        setButtons(k); refreshUI();
+        reveal(viaButton ? quoteBtn : null);
+      }, TEXT_DELAY);
+      if (await play(k, id, from) && step < SEQS.length) warm(step);
+    } finally {
+      locked = false; stepsEl.classList.remove("busy");
+    }
   }
   async function goStart() {
+    if (locked) return;
     const id = ++run;
     actions.classList.add("hide"); textEl.classList.add("out");
     if (!await dissolve(snapshot(), startImg, id)) return;
@@ -493,7 +510,7 @@
     const k = SEQS.findIndex(s => "#" + s.slug === location.hash);
     if (k < 0) return;
     scrollTo(0, 0);
-    if (loaded[k]) go(k, false); else wanted = k;
+    go(k, false);
   }
   addEventListener("hashchange", fromHash);
 

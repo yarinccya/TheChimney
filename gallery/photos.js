@@ -1,12 +1,12 @@
-// Photos shown on gallery.html, newest first.
+// Photos shown on gallery.html, newest first. Real jobs.
 // To add a job: put the photo in this gallery/ folder and add a line below.
 //   service: "install" | "clean" | "replace"   (sets which filter it shows under)
-// The six photos below are stills from the site's videos, as samples. Replace them with photos of real jobs.
+// Portrait photos (4:5) fill the tiles best.
 window.GALLERY_PHOTOS = [
-  { src: "gallery/replace-2.webp", service: "replace", caption: "Rebuilt brick stack with new flashing" },
-  { src: "gallery/clean-2.webp",   service: "clean",   caption: "Full sweep and flue inspection" },
-  { src: "gallery/install-2.webp", service: "install", caption: "New chimney, hearth to cap" },
-  { src: "gallery/replace-1.webp", service: "replace", caption: "Tearing out a crumbling chimney" },
-  { src: "gallery/clean-1.webp",   service: "clean",   caption: "Clearing soot and creosote" },
-  { src: "gallery/install-1.webp", service: "install", caption: "Chimney going up on a home with no flue" }
+  { src: "gallery/job-4.webp", service: "install", caption: "Stone chimney on a craftsman home" },
+  { src: "gallery/job-1.webp", service: "install", caption: "Brick chimney on a colonial home" },
+  { src: "gallery/job-3.webp", service: "clean",   caption: "Stainless steel cap on a brick chimney" },
+  { src: "gallery/job-5.webp", service: "clean",   caption: "Swept and ready for winter" },
+  { src: "gallery/job-6.webp", service: "replace", caption: "Tall brick stack on a Victorian home" },
+  { src: "gallery/job-2.webp", service: "replace", caption: "Brick chimney, seen from above" }
 ];
