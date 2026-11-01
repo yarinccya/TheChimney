@@ -7,6 +7,18 @@
   const SOURCE = { "leads-api": "מערכת לידים", phone: "טלפון", website: "אתר", referral: "המלצה", social: "רשתות חברתיות", field: "שטח", other: "אחר" };
   const PHONE_ICON = '<svg viewBox="0 0 24 24"><path d="M6.6 10.8a15 15 0 0 0 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1A17 17 0 0 1 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1z"/></svg>';
 
+  // Plain line icons for the card action bars (no emoji).
+  const ICON = {
+    call: PHONE_ICON,
+    whatsapp: '<svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2c-1.5 0-3-.4-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 2.9 2.9 0 0 0-.9 2.2 5 5 0 0 0 1.1 2.7 11.5 11.5 0 0 0 4.4 3.9c1.6.7 2.3.8 3.1.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3z"/></svg>',
+    reminder: '<svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16zm1-13h-2v6.4l5 3 1-1.7-4-2.4z"/></svg>',
+    order: '<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zm-1 7V3.5L18.5 9zM11 12h2v3h3v2h-3v3h-2v-3H8v-2h3z"/></svg>',
+    edit: '<svg viewBox="0 0 24 24"><path d="M3 17.2V21h3.8l11-11-3.8-3.8zM20.7 7a1 1 0 0 0 0-1.4l-2.3-2.3a1 1 0 0 0-1.4 0l-1.8 1.8 3.8 3.8z"/></svg>',
+    person: '<svg viewBox="0 0 24 24"><path d="M10 12a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9zm0 2c-4 0-8 2-8 5v2h11.5a6 6 0 0 1-.5-2.4c0-1.8.7-3.4 1.9-4.5A12 12 0 0 0 10 14zm9-1h-2v3h-3v2h3v3h2v-3h3v-2h-3z"/></svg>',
+    close: '<svg viewBox="0 0 24 24"><path d="M19 6.4 17.6 5 12 10.6 6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12z"/></svg>',
+    undo: '<svg viewBox="0 0 24 24"><path d="M12.5 8c-2.7 0-5.1 1-7 2.6L2 7v9h9l-3.6-3.6c1.4-1.2 3.2-1.9 5.1-1.9 3.5 0 6.5 2.3 7.6 5.5l2.4-.8C21 11 17.1 8 12.5 8z"/></svg>',
+  };
+
   // Each screen render bumps this; a slow response for an old screen is dropped.
   let seq = 0;
   const fresh = () => { const n = ++seq; return () => n === seq; };
@@ -386,12 +398,12 @@
       $("leadBody").innerHTML = `
         <div class="c-head"><h2>${esc(l.name || "ליד ללא שם")}</h2><span class="pill lead-${l.status}">ליד · ${LEAD_STATUS[l.status]}</span></div>
         <div class="c-actions lead-actions">
-          <a class="act green" href="tel:${esc(l.phone)}"><i>📞</i><span>התקשר</span></a>
-          <a class="act" href="https://wa.me/${waNumber(l.phone)}" target="_blank" rel="noopener"><i>💬</i><span>וואטסאפ</span></a>
-          ${l.customer_id ? `<a class="act primary" href="#/customer/${l.customer_id}"><i>👤</i><span>לכרטיס הלקוח</span></a>`
-            : open ? `<button class="act primary" type="button" id="lConvert"><i>👤</i><span>הפוך ללקוח</span></button>` : ""}
-          ${open ? `<button class="act" type="button" id="lReject"><i>✖</i><span>לא רלוונטי</span></button>`
-            : l.status === "rejected" ? `<button class="act" type="button" id="lReopen"><i>↩</i><span>החזר לממתינים</span></button>` : ""}
+          <a class="act call" href="tel:${esc(l.phone)}">${ICON.call}<span>התקשר</span></a>
+          <a class="act wa" href="https://wa.me/${waNumber(l.phone)}" target="_blank" rel="noopener">${ICON.whatsapp}<span>וואטסאפ</span></a>
+          ${l.customer_id ? `<a class="act" href="#/customer/${l.customer_id}">${ICON.person}<span>לכרטיס הלקוח</span></a>`
+            : open ? `<button class="act" type="button" id="lConvert">${ICON.person}<span>הפוך ללקוח</span></button>` : ""}
+          ${open ? `<button class="act" type="button" id="lReject">${ICON.close}<span>לא רלוונטי</span></button>`
+            : l.status === "rejected" ? `<button class="act" type="button" id="lReopen">${ICON.undo}<span>החזר לממתינים</span></button>` : ""}
         </div>
         <div class="c-pane on">
           <div class="facts">${facts.map(([k, v]) => `<div>${k}<b>${esc(v)}</b></div>`).join("")}</div>
@@ -500,13 +512,11 @@
         <h2>${esc(c.name)}</h2><span class="pill ${c.status}">${STATUS[c.status] || c.status}${esc(followUp)}</span>
       </div>
       <div class="c-actions">
-        <a class="act green" href="tel:${esc(c.phone)}"><i>📞</i><span>התקשר</span></a>
-        <a class="act" href="https://wa.me/${waNumber(c.phone)}" target="_blank" rel="noopener"><i>💬</i><span>וואטסאפ</span></a>
-        <button class="act" type="button" id="cFollow"><i>⏰</i><span>לחזור אליו</span></button>
-        <a class="act primary" href="#/order-new/${c.id}"><i>🧾</i><span>הזמנה</span></a>
-        <button class="act" type="button" id="cWon"><i>✅</i><span>לקוח</span></button>
-        <button class="act" type="button" id="cLost"><i>✖</i><span>לא רלוונטי</span></button>
-        <a class="act" href="#/customer-edit/${c.id}"><i>✏️</i><span>עריכה</span></a>
+        <a class="act call" href="tel:${esc(c.phone)}">${ICON.call}<span>התקשר</span></a>
+        <a class="act wa" href="https://wa.me/${waNumber(c.phone)}" target="_blank" rel="noopener">${ICON.whatsapp}<span>וואטסאפ</span></a>
+        <button class="act" type="button" id="cFollow">${ICON.reminder}<span>תזכורת לחזור</span></button>
+        <a class="act" href="#/order-new/${c.id}">${ICON.order}<span>הזמנה חדשה</span></a>
+        <a class="act" href="#/customer-edit/${c.id}">${ICON.edit}<span>עריכת פרטים</span></a>
       </div>
       <div class="mtabs c-tabs" id="cTabs" role="tablist">
         <button type="button" data-t="info">פרטים</button>
@@ -555,8 +565,6 @@
     showTab(custTab);
 
     $("cFollow").addEventListener("click", () => openFollowUp(c));
-    $("cWon").addEventListener("click", () => setStatus(c.id, "customer"));
-    $("cLost").addEventListener("click", () => { if (confirm("לסמן את הלקוח כלא רלוונטי?")) setStatus(c.id, "closed"); });
     $("noteForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const text = $("noteText").value.trim();

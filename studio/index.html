@@ -433,15 +433,15 @@
   .cust { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: .6rem; }
   .c-head { flex: none; display: flex; align-items: center; justify-content: space-between; gap: .6rem; }
   .c-head h2 { font-size: 1.3rem; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .c-actions { flex: none; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .4rem; }
-  .act { display: flex; flex-direction: column; align-items: center; gap: .15rem; padding: .5rem .2rem; border-radius: 12px; border: 1px solid var(--line);
-    background: var(--navy-deep); color: var(--cream); text-decoration: none; cursor: pointer; font-size: .78rem; font-weight: 700; transition: background .15s, transform .1s; }
-  .act i { font-style: normal; font-size: 1.15rem; line-height: 1.2; }
-  .act span { white-space: nowrap; }
-  .act:hover { background: #0e2747; }
-  .act:active { transform: scale(.95); }
-  .act.green { background: #1f8f5f; border-color: #1f8f5f; }
-  .act.primary { background: var(--red); border-color: var(--red); }
+  .c-actions { flex: none; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .5rem; }
+  .act { display: flex; align-items: center; justify-content: center; gap: .5rem; padding: .7rem .6rem; border-radius: 10px;
+    border: 1px solid var(--line); background: var(--navy-deep); color: var(--cream); text-decoration: none; cursor: pointer;
+    font-size: .9rem; font-weight: 600; transition: background .15s, border-color .15s; min-width: 0; }
+  .act svg { flex: none; width: 18px; height: 18px; fill: currentColor; opacity: .85; }
+  .act span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .act:hover { background: #0e2747; border-color: rgba(247,241,227,.3); }
+  .act.call svg { color: #3fc38a; opacity: 1; }
+  .act.wa svg { color: #25d366; opacity: 1; }
   .c-tabs { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; display: flex; flex: none; }
   .c-tabs button { flex: 1; border: 0; background: none; padding: .6rem .2rem .5rem; font-size: .88rem; font-weight: 700; color: var(--muted); cursor: pointer;
     border-bottom: 2px solid transparent; }
@@ -460,8 +460,9 @@
   .timeline .t { font-size: .88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .timeline small { color: var(--muted); font-size: .72rem; }
   @media (max-width: 560px) {
-    .c-actions { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-    .act { padding: .4rem .1rem; font-size: .72rem; }
+    .c-actions { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .35rem; }
+    .act { flex-direction: column; gap: .25rem; padding: .55rem .1rem; font-size: .72rem; }
+    .act span { white-space: normal; overflow: visible; text-align: center; line-height: 1.15; width: 100%; }
     .c-head h2 { font-size: 1.15rem; }
   }
 
