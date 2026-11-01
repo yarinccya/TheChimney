@@ -129,20 +129,26 @@
     .svc { align-items: center; gap: .45rem; width: 100%; }
     .svc-label { font-size: .72rem; letter-spacing: .16em; }
     .svc-label::before { width: 1.1rem; }
-    .svc .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; width: 100%; max-width: 22rem; padding: .3rem;
-      border-radius: 999px; background: rgba(7,23,44,.55); border: 1px solid rgba(247,241,227,.22);
-      -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); box-shadow: 0 8px 24px rgba(0,0,0,.35); }
+    /* light bar: cream with navy text so it stands out over the dark footage; the playing service turns red */
+    .svc .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; width: 100%; max-width: 23rem; padding: .3rem;
+      border-radius: 999px; background: rgba(247,241,227,.96); border: 2px solid #fff;
+      box-shadow: 0 10px 30px rgba(0,0,0,.45), 0 0 0 4px rgba(247,241,227,.18); }
     .svc .steps li { position: relative; }
-    .svc .steps li + li::before { content: ""; position: absolute; left: 0; top: 25%; bottom: 25%; width: 1px; background: rgba(247,241,227,.2); }
+    .svc .steps li + li::before { content: ""; position: absolute; left: 0; top: 25%; bottom: 25%; width: 1px; background: rgba(11,37,69,.2); }
     .svc .steps li.on::before, .svc .steps li.on + li::before { opacity: 0; }
     .svc .steps button, .svc .steps button:hover:not(:disabled), .svc .steps button:active:not(:disabled), .svc .steps button:focus-visible {
-      width: 100%; justify-content: center; gap: .35rem; padding: .5rem .3rem; font-size: .95rem; letter-spacing: .05em;
-      background: transparent; color: var(--cream); border: 0; border-radius: 999px; box-shadow: none; transform: none; }
+      width: 100%; justify-content: center; gap: .4rem; padding: .62rem .3rem; font-size: 1.05rem; letter-spacing: .05em;
+      background: transparent; color: var(--navy); border: 0; border-radius: 999px; box-shadow: none; transform: none; }
     .svc .steps button::before { display: none; }
-    .svc .steps .ico { width: 1.15em; height: 1.15em; }
-    .svc .steps li.done button, .svc .steps li.done button:hover:not(:disabled) { background: transparent; color: rgba(247,241,227,.75); }
-    .svc .steps li.on button, .svc .steps li.on button:hover:not(:disabled) { background: var(--red); color: var(--cream); box-shadow: 0 2px 10px rgba(200,16,46,.45); }
-    .svc .steps.busy li:not(.on) button { opacity: .5; }
+    .svc .steps .ico, .svc .steps button:hover:not(:disabled) .ico, .svc .steps button:focus-visible .ico { width: 1.2em; height: 1.2em; background: var(--red); transform: none; }
+    .svc .steps button:hover:not(:disabled) .ico::before, .svc .steps button:focus-visible .ico::before { border-left-color: var(--cream); }
+    .svc .steps li.done button, .svc .steps li.done button:hover:not(:disabled) { background: transparent; color: rgba(11,37,69,.6); }
+    .svc .steps li.done .ico, .svc .steps li.done button:hover:not(:disabled) .ico { background: var(--navy); }
+    .svc .steps li.done .ico::before, .svc .steps li.done button:hover:not(:disabled) .ico::before { border-left-color: var(--cream); }
+    .svc .steps li.on button, .svc .steps li.on button:hover:not(:disabled) { background: var(--red); color: var(--cream); box-shadow: 0 3px 12px rgba(200,16,46,.5); }
+    .svc .steps li.on .ico, .svc .steps li.on button:hover:not(:disabled) .ico { background: var(--cream); }
+    .svc .steps li.on .ico::before, .svc .steps li.on button:hover:not(:disabled) .ico::before { border-left-color: var(--red); }
+    .svc .steps.busy li:not(.on) button { opacity: .45; }
     @keyframes svc-ring { 0% { transform: scale(1); opacity: .8; } 70%, 100% { transform: scale(1.7); opacity: 0; } }
     .actions button, .actions a.btn { flex: 1 1 100%; justify-content: center; }
   }
