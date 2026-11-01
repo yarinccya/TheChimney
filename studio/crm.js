@@ -17,20 +17,8 @@
   /* ---------- dashboard ---------- */
   const TZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const compact = (v) => `₪${new Intl.NumberFormat("he-IL", { notation: "compact", maximumFractionDigits: 1 }).format(v || 0)}`;
-  const mine = () => (store.get("studioMine") ?? "1") === "1" && !!agent().name;
-
-  // Two copies of the switch: the desktop dashboard and the phone one.
-  const scopes = document.querySelectorAll("[data-scope]");
-  function setScope() {
-    for (const sc of scopes) for (const b of sc.children) b.classList.toggle("on", (b.dataset.mine === "1") === mine());
-  }
-  for (const sc of scopes) sc.addEventListener("click", (e) => {
-    const b = e.target.closest("button");
-    if (!b) return;
-    if (b.dataset.mine === "1" && !agent().name) return go("#/settings");
-    store.set("studioMine", b.dataset.mine);
-    Studio.render();
-  });
+  // The employee's own dashboard: their customers, calls and orders (leads are a shared pool).
+  const mine = () => !!agent().name;
 
   // Menu badges on every screen; the dashboard fills them from its own data.
   let countsAt = 0;
@@ -288,7 +276,6 @@
     const h = new Date().getHours();
     $("hello").textContent = `${h < 5 ? "לילה טוב" : h < 12 ? "בוקר טוב" : h < 18 ? "צהריים טובים" : "ערב טוב"}${name ? ", " + name : ""}`;
     $("today").textContent = new Date().toLocaleDateString("he-IL", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
-    setScope();
     try {
       const d = await crm("dashboard", { mine: mine(), tz: TZ });
       if (!live()) return;
